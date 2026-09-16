@@ -1,0 +1,22 @@
+"""Tracking parameters, in normalized coordinates unless stated.
+
+Noise entries are standard deviations; covariance construction squares them.
+These are inherited experimental settings, not newly calibrated uncertainty.
+"""
+MAX_SKIP = 15
+MIN_HITS_CONFIRM = 3
+MAX_LOST_FRAMES = 3
+IOU_THRESHOLD = 0.25
+MAHAL_THRESHOLD = 9.4877
+MIN_INFER_EVERY = 30
+BOUNDARY_MARGIN = 0.05
+SIGMA_P = 0.003
+SIGMA_S = 0.002
+SIGMA_V = 0.002
+SIGMA_A = 0.001
+SIGMA_MEAS_PX = 5.0
+UNCERTAINTY_THRES = 3e-4
+RESCUE_CONF_DEFAULT = 0.5
+MAX_RESCUE_DEFAULT = 2
+ERD_INPUT_W = 640
+ERD_INPUT_H = 360
