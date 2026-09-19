@@ -1,0 +1,27 @@
+# Paths are relative to the repository root.
+# All video directories are discovered automatically; no video IDs are listed.
+dataset:
+  images: data/bdd100k/images/track/val
+  labels: data/bdd100k/labels/box_track_20/val
+
+  # Zero-based indices into alphabetically sorted videos; end is exclusive.
+  sequence:
+    start: 0
+    end: 10
+
+experiment:
+  # Choose any registered variants. always_on is the detector-only baseline.
+  variants:
+    - original
+    - raw_both
+    - cv8
+    - damped_ca10
+    - log_cv8
+    - aspect_cv8
+    - projective_restart_cv8
+    - camera_ca10
+    - appearance_ca10
+    - visibility_ca10
+    - always_on
+
+  repeats: 1
