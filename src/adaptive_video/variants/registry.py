@@ -1,0 +1,74 @@
+"""Map experiment names to controller, track type and output mode."""
+
+import numpy as np
+
+from ..tracking.kalman import BoxTrack
+from ..tracking.output import DetectorOutputTracker
+from ..tracking.scheduler import AdaptiveDetectionTracker
+from .appearance import AppearanceDetector
+from .camera import CameraDetector
+from .motion import ConstantVelocity, DampedAcceleration
+from .projective_restart import ProjectiveRestartCV
+from .representation import LogSizeCV, AspectHeightCV
+from .visibility import VisibilityDetector, ExistenceTrack
+
+VARIANTS = {
+    'original': (AdaptiveDetectionTracker, BoxTrack, 'original'),
+    'raw_both': (DetectorOutputTracker, BoxTrack, 'raw_both'),
+    'cv8': (DetectorOutputTracker, ConstantVelocity, 'raw_both'),
+    'damped_ca10': (DetectorOutputTracker, DampedAcceleration, 'raw_both'),
+    'log_cv8': (DetectorOutputTracker, LogSizeCV, 'raw_both'),
+    'aspect_cv8': (DetectorOutputTracker, AspectHeightCV, 'raw_both'),
+    'projective_restart_cv8': (
+        DetectorOutputTracker,
+        ProjectiveRestartCV,
+        'raw_both',
+    ),
+    'camera_ca10': (CameraDetector, BoxTrack, 'raw_both'),
+    'appearance_ca10': (AppearanceDetector, BoxTrack, 'raw_both'),
+    'visibility_ca10': (VisibilityDetector, ExistenceTrack, 'raw_both'),
+}
+
+
+def payload(value, seen=None):
+    """Count unique NumPy array storage reachable from a nested value."""
+    seen = set() if seen is None else seen
+
+    if id(value) in seen:
+        return 0
+
+    seen.add(id(value))
+
+    if isinstance(value, np.ndarray):
+        return value.nbytes
+
+    if isinstance(value, dict):
+        return sum(payload(v, seen) for v in value.values())
+
+    if isinstance(value, (list, tuple)):
+        return sum(payload(v, seen) for v in value)
+
+    return 0
+
+
+def compare_outputs(got, expected):
+    """Compare classes, geometry and confidence for corresponding frames."""
+    assert len(got) == len(expected)
+
+    for actual_frame, expected_frame in zip(got, expected):
+        assert len(actual_frame) == len(expected_frame)
+
+        for actual_detection, expected_detection in zip(actual_frame, expected_frame):
+            assert (
+                actual_detection['class_id'] == expected_detection['class_id']
+                and actual_detection['class_name'] == expected_detection['class_name']
+            )
+            assert np.allclose(
+                actual_detection['box_xyxy'],
+                expected_detection['box_xyxy'],
+                rtol=0,
+                atol=1e-9,
+            )
+            assert np.isclose(
+                actual_detection['conf'], expected_detection['conf'], rtol=0, atol=1e-9
+            )
