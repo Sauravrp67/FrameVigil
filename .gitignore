@@ -23,3 +23,5 @@ AGENTS.md
 .env
 .env.*
 Agents.md
+licenses/
+paper/
