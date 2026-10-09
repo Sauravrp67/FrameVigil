@@ -14,6 +14,7 @@ import traceback
 import cv2
 import numpy as np
 import torch
+from tqdm import tqdm
 
 from .. import dataset as common
 from ..detectors.yolo import load_detector
@@ -94,10 +95,19 @@ def trial(model, variant, video, repeat, freeze, experiment, source, power_backe
         power.phase = f'r{repeat}_{variant}_{video}'
         time.sleep(0.25)
 
+    frame_progress = tqdm(
+        frames,
+        desc=f'{variant} | {video} | repeat {repeat + 1}',
+        unit='frame',
+        position=1,
+        leave=False,
+        mininterval=1.0,
+        dynamic_ncols=True,
+    )
     start = time.monotonic()
 
     try:
-        for frame_index, frame in enumerate(frames):
+        for frame_index, frame in enumerate(frame_progress):
             if frame_index % 20 == 0:
                 monitor_start = time.monotonic()
                 guard.check_competing_benchmark()
@@ -147,6 +157,8 @@ def trial(model, variant, video, repeat, freeze, experiment, source, power_backe
             time.sleep(0.25)
 
     finally:
+        frame_progress.close()
+
         if power is not None:
             power.stop()
             power.save(power_path, {
@@ -220,7 +232,11 @@ def trial(model, variant, video, repeat, freeze, experiment, source, power_backe
                 )
 
     common.save(destination, data)
-    print(repeat, variant, video, 'calls', data['calls'], 'wall_s', data['wall_s'], 'J', joules, 'PASS', flush=True)
+    tqdm.write(
+        f"repeat {repeat + 1} | {variant} | {video} | "
+        f"calls {data['calls']}/{len(frames)} | "
+        f"{data['wall_s']:.2f}s | energy {joules} J | PASS"
+    )
 
 
 def main(experiment, power_backend='none'):
@@ -249,7 +265,13 @@ def main(experiment, power_backend='none'):
 
     inventory = common.read(experiment / freeze['dataset_manifest'])
 
-    for path, checksum in inventory['image_sha256'].items():
+    for path, checksum in tqdm(
+        inventory['image_sha256'].items(),
+        desc='Checking input images',
+        unit='image',
+        mininterval=1.0,
+        dynamic_ncols=True,
+    ):
         assert common.sha(ROOT / path) == checksum, path
 
     torch.set_num_threads(1)
@@ -262,6 +284,7 @@ def main(experiment, power_backend='none'):
     guard.check_competing_benchmark()
     guard.device_snapshot()
     
+    tqdm.write('Loading detector and warming up...')
     model = load_detector()
 
     for _ in range(8):
@@ -283,21 +306,29 @@ def main(experiment, power_backend='none'):
             'power_backend': power_backend,
         })
 
-    for scheduled_trial in freeze['schedule']:
-        try:
-            trial(
-                model, **scheduled_trial, freeze=freeze, experiment=experiment,
-                source=source, power_backend=power_backend,
-            )
-        except Exception as error:
-            filename = f"r{scheduled_trial['repeat']}_{scheduled_trial['variant']}_{scheduled_trial['video']}.json"
-            common.save(experiment / 'results/failures' / filename, {
-                'time': common.now(),
-                'trial': scheduled_trial,
-                'error': repr(error),
-                'traceback': traceback.format_exc(),
-            })
-            raise
+    with tqdm(
+        freeze['schedule'],
+        desc='Experiment trials',
+        unit='trial',
+        position=0,
+        mininterval=1.0,
+        dynamic_ncols=True,
+    ) as trial_progress:
+        for scheduled_trial in trial_progress:
+            try:
+                trial(
+                    model, **scheduled_trial, freeze=freeze, experiment=experiment,
+                    source=source, power_backend=power_backend,
+                )
+            except Exception as error:
+                filename = f"r{scheduled_trial['repeat']}_{scheduled_trial['variant']}_{scheduled_trial['video']}.json"
+                common.save(experiment / 'results/failures' / filename, {
+                    'time': common.now(),
+                    'trial': scheduled_trial,
+                    'error': repr(error),
+                    'traceback': traceback.format_exc(),
+                })
+                raise
 
     print(f"COMPLETE all {len(freeze['schedule'])} live trials", flush=True)
 
