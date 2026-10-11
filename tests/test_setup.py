@@ -100,6 +100,8 @@ def test_installer_selects_runtime_without_real_installation(
     assert 'tests/environment_check.py' in commands
     assert 'numpy==1.26.4' not in commands
     assert 'opencv-python==4.8.0.76' not in commands
+    opencv_command = next(line for line in commands.splitlines() if 'opencv-python>=4.8' in line)
+    assert '--index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple' in opencv_command
 
 
 def make_installer_fixture(tmp_path, python_version, l4t_version, cuda_version):
@@ -137,7 +139,7 @@ def make_installer_fixture(tmp_path, python_version, l4t_version, cuda_version):
         '      if [[ "$4" == torch ]]; then echo "Version: 2.11.0+cu130"; else echo "Version: 0.26.0+cu130"; fi ;;\n'
         '  esac\n'
         'fi\n'
-        'if [[ "$*" == *"--index-url"* ]]; then touch "$SETUP_TEST_INSTALLED"; fi\n'
+        'if [[ "$*" == *"torch>=2.1"* ]]; then touch "$SETUP_TEST_INSTALLED"; fi\n'
         'exit 0\n'
     )
     interpreter.chmod(0o755)
@@ -163,6 +165,7 @@ def make_installer_fixture(tmp_path, python_version, l4t_version, cuda_version):
         SETUP_TEST_INSTALLED=str(tmp_path / 'torch_installed'),
         DEVICE='auto',
         TORCH_INDEX_URL='',
+        OPENCV_INDEX_URL='',
     )
 
     return tools, environment, script, calls
@@ -180,7 +183,7 @@ def test_existing_torch_is_reused_without_a_version_whitelist(tmp_path):
     )
 
     assert result.returncode == 0, result.stdout + result.stderr
-    assert '--index-url' not in calls.read_text()
+    assert 'torch>=2.1' not in calls.read_text()
     assert 'Reusing installed PyTorch' in result.stdout
 
 
@@ -195,4 +198,4 @@ def test_missing_cuda_information_does_not_silently_install_cpu_torch(tmp_path):
 
     assert result.returncode != 0
     assert 'CUDA version could not be detected' in result.stderr
-    assert '--index-url' not in calls.read_text()
+    assert 'torch>=2.1' not in calls.read_text()

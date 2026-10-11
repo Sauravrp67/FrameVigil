@@ -7,6 +7,7 @@ PYTHON=${PYTHON:-python3}
 ENVIRONMENT=${ENVIRONMENT:-"$PROJECT_DIRECTORY/.venv"}
 DEVICE=${DEVICE:-auto}
 TORCH_INDEX_URL=${TORCH_INDEX_URL:-}
+OPENCV_INDEX_URL=${OPENCV_INDEX_URL:-https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple}
 CHECK_ONLY=false
 
 case "${1:-}" in
@@ -15,6 +16,7 @@ case "${1:-}" in
         echo 'Usage: bash scripts/setup.sh [--check]'
         echo 'Optional: PYTHON=/path/to/python ENVIRONMENT=/path/to/venv'
         echo 'DEVICE=auto|cuda|cpu (default: auto); TORCH_INDEX_URL overrides wheel selection.'
+        echo 'OPENCV_INDEX_URL overrides the mirror used for NumPy and OpenCV.'
         echo '--check runs functional tests without installing anything.'
         exit 0
         ;;
@@ -124,7 +126,9 @@ touch "$CONSTRAINTS"
 if package_at_least numpy 1.26; then
     echo "numpy==$(package_version numpy)" >> "$CONSTRAINTS"
 fi
-"$PYTHON" -m pip install -c "$CONSTRAINTS" 'numpy>=1.26' 'opencv-python>=4.8'
+echo "Installing NumPy and OpenCV from $OPENCV_INDEX_URL"
+"$PYTHON" -m pip install -c "$CONSTRAINTS" 'numpy>=1.26' 'opencv-python>=4.8' \
+    --index-url "$OPENCV_INDEX_URL"
 
 if package_at_least torch 2.1 && package_at_least torchvision 0.16; then
     echo 'Reusing installed PyTorch and torchvision; functional tests run below.'
