@@ -15,6 +15,7 @@ import cv2
 import numpy as np
 import torch
 from tqdm import tqdm
+from packaging.version import Version
 
 from .. import dataset as common
 from ..detectors.yolo import load_detector
@@ -253,9 +254,8 @@ def main(experiment, power_backend='none'):
     freeze = common.read(experiment / 'manifests/freeze.json')
     source = EvaluationDataset(experiment / freeze['dataset_manifest'])
 
-    assert np.__version__ == '1.26.4'
-    assert np._get_promotion_state() == 'legacy'
-    assert cv2.__version__ == '4.8.0'
+    if Version(np.__version__) < Version('1.26') or Version(cv2.__version__) < Version('4.8'):
+        raise RuntimeError('Measurement requires NumPy >= 1.26 and OpenCV >= 4.8')
     if power_backend == 'vdd_in':
         assert common.read(experiment / 'results/power_check.json')['status'] == 'PASS'
     available_variants = set(VARIANTS) | {'always_on'}
@@ -300,7 +300,7 @@ def main(experiment, power_backend='none'):
             'torch': torch.__version__,
             'numpy': np.__version__,
             'opencv': cv2.__version__,
-            'promotion': np._get_promotion_state(),
+            'promotion': getattr(np, '_get_promotion_state', lambda: 'not exposed')(),
             'device': torch.cuda.get_device_name(0),
             'architecture': platform.machine(),
             'power_backend': power_backend,

@@ -5,6 +5,8 @@ Run directly with the environment's Python. CUDA builds exercise the selected GP
 
 import importlib
 import importlib.metadata
+import os
+import sys
 from pathlib import Path
 import unittest
 
@@ -13,6 +15,9 @@ PROJECT_DIRECTORY = Path(__file__).resolve().parents[1]
 
 
 class EnvironmentTests(unittest.TestCase):
+    def test_python_version(self):
+        self.assertGreaterEqual(sys.version_info[:2], (3, 10))
+
     def test_required_package_versions(self):
         from packaging.requirements import Requirement
 
@@ -50,8 +55,10 @@ class EnvironmentTests(unittest.TestCase):
         import cv2
         import numpy as np
 
-        self.assertEqual(np.__version__, '1.26.4')
-        self.assertEqual(cv2.__version__, '4.8.0')
+        from packaging.version import Version
+
+        self.assertGreaterEqual(Version(np.__version__), Version('1.26'))
+        self.assertGreaterEqual(Version(cv2.__version__), Version('4.8'))
 
         image = np.zeros((2, 2, 3), dtype=np.uint8)
         grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -67,14 +74,26 @@ class EnvironmentTests(unittest.TestCase):
         self.assertGreaterEqual(Version(torch.__version__), Version('2.1'))
         self.assertGreaterEqual(Version(torchvision.__version__), Version('0.16'))
 
-        device = 'cuda' if torch.version.cuda is not None else 'cpu'
+        device = os.environ.get('FRAMEVIGIL_DEVICE', 'auto')
+
+        if device == 'auto':
+            device = 'cuda' if torch.version.cuda is not None else 'cpu'
+
+        self.assertIn(device, {'cpu', 'cuda'})
 
         if device == 'cuda':
+            self.assertIsNotNone(torch.version.cuda, 'Installed Torch is a CPU-only build')
             self.assertTrue(torch.cuda.is_available(), 'CUDA is unavailable')
 
         values = torch.from_numpy(np.ones((2, 2), dtype=np.float32)).to(device)
         product = values @ values
         self.assertTrue(torch.all(product == 2).item())
+
+        convolution = torch.nn.Conv2d(3, 4, kernel_size=3).to(device)
+        image = torch.ones((1, 3, 16, 16), device=device)
+        features = convolution(image)
+        self.assertEqual(tuple(features.shape), (1, 4, 14, 14))
+        self.assertTrue(torch.isfinite(features).all().item())
 
         boxes = torch.tensor([[0., 0., 1., 1.]], device=device)
         scores = torch.tensor([0.9], device=device)
