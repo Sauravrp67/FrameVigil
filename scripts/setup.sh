@@ -7,7 +7,9 @@ PYTHON=${PYTHON:-python3}
 ENVIRONMENT=${ENVIRONMENT:-"$PROJECT_DIRECTORY/.venv"}
 DEVICE=${DEVICE:-auto}
 TORCH_INDEX_URL=${TORCH_INDEX_URL:-}
-OPENCV_INDEX_URL=${OPENCV_INDEX_URL:-https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple}
+PACKAGE_INDEX_URL=${PACKAGE_INDEX_URL:-https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple}
+OPENCV_INDEX_URL=${OPENCV_INDEX_URL:-$PACKAGE_INDEX_URL}
+export PIP_INDEX_URL="$PACKAGE_INDEX_URL"
 CHECK_ONLY=false
 
 case "${1:-}" in
@@ -16,6 +18,7 @@ case "${1:-}" in
         echo 'Usage: bash scripts/setup.sh [--check]'
         echo 'Optional: PYTHON=/path/to/python ENVIRONMENT=/path/to/venv'
         echo 'DEVICE=auto|cuda|cpu (default: auto); TORCH_INDEX_URL overrides wheel selection.'
+        echo 'PACKAGE_INDEX_URL overrides the mirror used for general dependencies.'
         echo 'OPENCV_INDEX_URL overrides the mirror used for NumPy and OpenCV.'
         echo '--check runs functional tests without installing anything.'
         exit 0
@@ -162,10 +165,18 @@ else
     fi
 
     echo "Installing PyTorch and torchvision from $TORCH_INDEX_URL"
-    # Resolve the pair together: torchvision declares its matching Torch version.
-    # pip selects wheels for this Python version and architecture.
-    "$PYTHON" -m pip install -c "$CONSTRAINTS" --only-binary=:all: 'torch>=2.1' 'torchvision>=0.16' \
-        --index-url "$TORCH_INDEX_URL" || fail 'PyTorch installation failed. Inspect the pip error above; no CPU fallback was installed.'
+    # Fetch the platform wheels separately so their dependency links cannot send
+    # NCCL and other general packages back to the slow default file server.
+    TORCH_WHEEL_DIRECTORY="$TEMPORARY_DIRECTORY/torch-wheels"
+    "$PYTHON" -m pip download --no-deps --only-binary=:all: 'torch>=2.1' 'torchvision>=0.16' \
+        --index-url "$TORCH_INDEX_URL" --dest "$TORCH_WHEEL_DIRECTORY" \
+        || fail 'PyTorch wheel download failed; no CPU fallback was installed.'
+
+    # Resolve dependencies from the mirror. pip also checks that these two
+    # selected wheels are compatible; conflicting versions fail installation.
+    "$PYTHON" -m pip install -c "$CONSTRAINTS" "$TORCH_WHEEL_DIRECTORY"/*.whl \
+        --index-url "$PACKAGE_INDEX_URL" \
+        || fail 'PyTorch dependency installation failed. Inspect the pip error above.'
 fi
 
 # Resolve support packages without replacing the selected numerical/GPU stack.

@@ -102,6 +102,12 @@ def test_installer_selects_runtime_without_real_installation(
     assert 'opencv-python==4.8.0.76' not in commands
     opencv_command = next(line for line in commands.splitlines() if 'opencv-python>=4.8' in line)
     assert '--index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple' in opencv_command
+    download_command = next(line for line in commands.splitlines() if '-m pip download' in line)
+    assert '--no-deps' in download_command
+
+    install_command = next(line for line in commands.splitlines() if 'torch-wheels/torch-' in line)
+    assert '--index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple' in install_command
+    assert '--no-deps' not in install_command
 
 
 def make_installer_fixture(tmp_path, python_version, l4t_version, cuda_version):
@@ -139,7 +145,12 @@ def make_installer_fixture(tmp_path, python_version, l4t_version, cuda_version):
         '      if [[ "$4" == torch ]]; then echo "Version: 2.11.0+cu130"; else echo "Version: 0.26.0+cu130"; fi ;;\n'
         '  esac\n'
         'fi\n'
-        'if [[ "$*" == *"torch>=2.1"* ]]; then touch "$SETUP_TEST_INSTALLED"; fi\n'
+        'if [[ "$*" == "-m pip download "* ]]; then\n'
+        '  while [[ "$1" != --dest ]]; do shift; done\n'
+        '  mkdir -p "$2"\n'
+        '  touch "$2/torch-test.whl" "$2/torchvision-test.whl"\n'
+        'fi\n'
+        'if [[ "$*" == "-m pip install "* && "$*" == *"torch-wheels/"* ]]; then touch "$SETUP_TEST_INSTALLED"; fi\n'
         'exit 0\n'
     )
     interpreter.chmod(0o755)
@@ -166,6 +177,7 @@ def make_installer_fixture(tmp_path, python_version, l4t_version, cuda_version):
         DEVICE='auto',
         TORCH_INDEX_URL='',
         OPENCV_INDEX_URL='',
+        PACKAGE_INDEX_URL='',
     )
 
     return tools, environment, script, calls
