@@ -100,8 +100,10 @@ def test_installer_selects_runtime_without_real_installation(
     assert 'tests/environment_check.py' in commands
     assert 'numpy==1.26.4' not in commands
     assert 'opencv-python==4.8.0.76' not in commands
-    opencv_command = next(line for line in commands.splitlines() if 'opencv-python>=4.8' in line)
-    assert '--index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple' in opencv_command
+    requirements_command = next(line for line in commands.splitlines() if ' -r ' in line)
+    assert 'environments/requirements.txt' in requirements_command
+    assert '--index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple' in requirements_command
+    assert '--no-deps' not in requirements_command
     download_command = next(line for line in commands.splitlines() if '-m pip download' in line)
     assert '--no-deps' in download_command
 

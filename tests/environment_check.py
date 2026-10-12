@@ -36,10 +36,35 @@ class EnvironmentTests(unittest.TestCase):
                 installed_version = importlib.metadata.version(requirement.name)
                 self.assertIn(installed_version, requirement.specifier)
 
+    def test_declared_dependencies(self):
+        from packaging.requirements import Requirement
+
+        requirements_file = PROJECT_DIRECTORY / 'environments/requirements.txt'
+
+        for line in requirements_file.read_text().splitlines():
+            if not line.strip() or line.startswith('#'):
+                continue
+
+            package = Requirement(line)
+            if package.marker and not package.marker.evaluate():
+                continue
+
+            distribution = importlib.metadata.distribution(package.name)
+            for declaration in distribution.requires or []:
+                dependency = Requirement(declaration)
+                if dependency.marker and not dependency.marker.evaluate({'extra': ''}):
+                    continue
+
+                with self.subTest(package=package.name, dependency=dependency.name):
+                    version = importlib.metadata.version(dependency.name)
+                    self.assertIn(version, dependency.specifier)
+
     def test_project_and_library_imports(self):
         modules = (
             'adaptive_video',
-            'scipy',
+            'scipy.linalg',
+            'pandas',
+            'onnx',
             'sklearn',
             'pycocotools.mask',
             'trackeval',
@@ -64,6 +89,28 @@ class EnvironmentTests(unittest.TestCase):
         grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         self.assertEqual(grayscale.shape, (2, 2))
+
+    def test_scientific_and_export_operations(self):
+        import numpy as np
+        import pandas as pd
+        import onnx
+        from onnx import numpy_helper
+        from scipy.linalg import solve
+
+        matrix = np.array([[3., 1.], [1., 2.]])
+        target = np.array([9., 8.])
+        np.testing.assert_allclose(solve(matrix, target), [2., 3.])
+        self.assertEqual(pd.DataFrame({'value': target})['value'].sum(), 17.)
+
+        values = matrix.astype(np.float32)
+        tensor = numpy_helper.from_array(values)
+        np.testing.assert_array_equal(numpy_helper.to_array(tensor), values)
+
+        node = onnx.helper.make_node('Identity', ['input'], ['output'])
+        inputs = [onnx.helper.make_tensor_value_info('input', onnx.TensorProto.FLOAT, [2, 2])]
+        outputs = [onnx.helper.make_tensor_value_info('output', onnx.TensorProto.FLOAT, [2, 2])]
+        graph = onnx.helper.make_graph([node], 'environment_check', inputs, outputs)
+        onnx.checker.check_model(onnx.helper.make_model(graph))
 
     def test_torch_and_torchvision_operations(self):
         import numpy as np

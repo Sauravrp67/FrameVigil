@@ -8,7 +8,6 @@ ENVIRONMENT=${ENVIRONMENT:-"$PROJECT_DIRECTORY/.venv"}
 DEVICE=${DEVICE:-auto}
 TORCH_INDEX_URL=${TORCH_INDEX_URL:-}
 PACKAGE_INDEX_URL=${PACKAGE_INDEX_URL:-https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple}
-OPENCV_INDEX_URL=${OPENCV_INDEX_URL:-$PACKAGE_INDEX_URL}
 export PIP_INDEX_URL="$PACKAGE_INDEX_URL"
 CHECK_ONLY=false
 
@@ -19,7 +18,6 @@ case "${1:-}" in
         echo 'Optional: PYTHON=/path/to/python ENVIRONMENT=/path/to/venv'
         echo 'DEVICE=auto|cuda|cpu (default: auto); TORCH_INDEX_URL overrides wheel selection.'
         echo 'PACKAGE_INDEX_URL overrides the mirror used for general dependencies.'
-        echo 'OPENCV_INDEX_URL overrides the mirror used for NumPy and OpenCV.'
         echo '--check runs functional tests without installing anything.'
         exit 0
         ;;
@@ -125,14 +123,6 @@ trap 'rm -rf -- "$TEMPORARY_DIRECTORY"' EXIT
 CONSTRAINTS="$TEMPORARY_DIRECTORY/installed-stack.txt"
 touch "$CONSTRAINTS"
 
-# Preserve an adequate existing NumPy when resolving a missing OpenCV build.
-if package_at_least numpy 1.26; then
-    echo "numpy==$(package_version numpy)" >> "$CONSTRAINTS"
-fi
-echo "Installing NumPy and OpenCV from $OPENCV_INDEX_URL"
-"$PYTHON" -m pip install -c "$CONSTRAINTS" 'numpy>=1.26' 'opencv-python>=4.8' \
-    --index-url "$OPENCV_INDEX_URL"
-
 if package_at_least torch 2.1 && package_at_least torchvision 0.16; then
     echo 'Reusing installed PyTorch and torchvision; functional tests run below.'
 else
@@ -179,17 +169,16 @@ else
         || fail 'PyTorch dependency installation failed. Inspect the pip error above.'
 fi
 
-# Resolve support packages without replacing the selected numerical/GPU stack.
-for package in numpy opencv-python torch torchvision; do
+# Preserve the GPU wheels while resolving the scientific and export stack together.
+for package in torch torchvision; do
     echo "$package==$(package_version "$package")" >> "$CONSTRAINTS"
 done
 
-# TrackEval's distribution requires a newer desktop stack than its metric code
-# needs. Its NumPy/SciPy/plotting dependencies are already listed explicitly.
-grep -v '^trackeval' "$PROJECT_DIRECTORY/environments/requirements.txt" > "$TEMPORARY_DIRECTORY/requirements.txt"
-grep '^trackeval' "$PROJECT_DIRECTORY/environments/requirements.txt" > "$TEMPORARY_DIRECTORY/tracking.txt"
-"$PYTHON" -m pip install -c "$CONSTRAINTS" -r "$TEMPORARY_DIRECTORY/requirements.txt"
-"$PYTHON" -m pip install --no-deps -r "$TEMPORARY_DIRECTORY/tracking.txt"
+# ONNX, NumPy, SciPy, OpenCV and TrackEval participate in the same resolution.
+# Do not freeze an older NumPy or bypass TrackEval's declared dependencies.
+"$PYTHON" -m pip install -c "$CONSTRAINTS" \
+    -r "$PROJECT_DIRECTORY/environments/requirements.txt" \
+    --index-url "$PACKAGE_INDEX_URL"
 "$PYTHON" -m pip install --no-deps -e "$PROJECT_DIRECTORY"
 
 run_environment_tests

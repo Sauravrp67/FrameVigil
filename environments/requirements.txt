@@ -1,7 +1,8 @@
-# Installed by scripts/setup.sh after checking NumPy, PyTorch,
-# torchvision, and OpenCV.
-# setup.sh resolves these while retaining the selected numerical/GPU stack.
-# Detector and metric versions remain fixed to preserve their APIs.
+# Resolved together by scripts/setup.sh while preserving the selected GPU wheels.
+# ONNX export support is included in the standard installation.
+numpy>=1.26
+opencv-python>=4.8
+onnx>=1.16
 scipy>=1.11
 pycocotools==2.0.10
 ultralytics==8.3.23

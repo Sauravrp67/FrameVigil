@@ -30,7 +30,7 @@ def build_engine(configuration, device='cuda'):
     try:
         import onnx
     except ImportError as error:
-        raise RuntimeError('Engine export requires ONNX: python -m pip install onnx') from error
+        raise RuntimeError('Engine export requires ONNX: run bash scripts/setup.sh') from error
 
     trt = require_tensorrt()
     settings = inference_settings(configuration)
