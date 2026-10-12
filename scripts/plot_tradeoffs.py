@@ -4,13 +4,14 @@ from _checkout import add_source_directory
 
 add_source_directory()
 
+from adaptive_video.experiments.figures import run
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--input', required=True)
     parser.add_argument('--output', required=True)
     args = parser.parse_args()
-    from adaptive_video.experiments.figures import run
     run(args.input, args.output)
 
 

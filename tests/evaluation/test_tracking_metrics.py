@@ -100,7 +100,7 @@ def test_no_ground_truth_returns_undefined_scores_but_counts_false_positives():
     [
         ([[box(10), box(10)]], 'duplicate track_id'),
         ([[dict(class_id=2, box_xyxy=[0, 0, 10, 10])]], 'track_id'),
-        ([[box(10, xyxy=(0, 0, 0, 10))]], 'invalid xyxy'),
+        ([[box(10, xyxy=(1, 0, 0, 10))]], 'invalid xyxy'),
         ([], 'every ground-truth frame'),
     ],
 )
@@ -205,3 +205,30 @@ def test_experiment_calls_detection_and_tracking_evaluators(monkeypatch, tmp_pat
     assert results['always_on']['tracking']['status'] == 'unavailable'
     assert results['always_on']['tracking']['metrics']['MOTA'] is None
     assert 'MOTA_percent' in (destination / 'summary.csv').read_text()
+
+
+@pytest.mark.parametrize('coordinates', [(0, 0, 0, 10), (0, 0, 10, 0), (0, 0, 0, 0)])
+def test_collapsed_predictions_remain_false_positives(coordinates):
+    predictions = {'video': [[box(10), box(11, xyxy=coordinates)]]}
+    metrics, details = mot({'video': [[box()]]}, predictions)
+
+    assert metrics['TP'] == 1
+    assert metrics['FP'] == 1
+    assert metrics['FN'] == 0
+    assert metrics['MOTA'] == 0
+    assert metrics['IDF1'] == pytest.approx(2 / 3)
+    assert metrics['HOTA'] == pytest.approx(np.sqrt(0.5))
+    assert details['zero_area_predictions'] == 1
+    assert details['zero_area_predictions_per_video'] == {'video': 1}
+    assert predictions['video'][0][1]['box_xyxy'] == list(coordinates)
+
+
+def test_collapsed_ground_truth_is_still_rejected():
+    with pytest.raises(ValueError, match='invalid xyxy'):
+        score([[box(xyxy=(0, 0, 0, 10))]], [[box(10)]])
+
+
+@pytest.mark.parametrize('coordinates', [(0, 0, float('nan'), 10), (0, 0, float('inf'), 10)])
+def test_nonfinite_predictions_are_still_rejected(coordinates):
+    with pytest.raises(ValueError, match='invalid xyxy'):
+        score([[box()]], [[box(10, xyxy=coordinates)]])

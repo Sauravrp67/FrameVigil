@@ -24,8 +24,10 @@ except ModuleNotFoundError as error:
 METRIC_NAMES = ('MOTA', 'IDF1', 'HOTA', 'DetA', 'AssA', 'LocA')
 
 
-def validate_frames(frames, label):
-    """Reject ambiguous identities or invalid geometry before matching."""
+def validate_frames(frames, label, allow_zero_area=False):
+    """Validate identities and geometry; optionally retain collapsed predictions."""
+
+    zero_area_count = 0
 
     for frame_index, objects in enumerate(frames):
         seen = set()
@@ -48,8 +50,21 @@ def validate_frames(frames, label):
 
             box = np.asarray(obj['box_xyxy'], dtype=float)
 
-            if box.shape != (4,) or not np.isfinite(box).all() or np.any(box[2:] <= box[:2]):
+            if box.shape != (4,) or not np.isfinite(box).all():
                 raise ValueError(f'{label} frame {frame_index}: invalid xyxy box')
+
+            dimensions = box[2:] - box[:2]
+
+            if np.any(dimensions < 0):
+                raise ValueError(f'{label} frame {frame_index}: invalid xyxy box')
+
+            if np.any(dimensions == 0):
+                if not allow_zero_area:
+                    raise ValueError(f'{label} frame {frame_index}: invalid xyxy box')
+
+                zero_area_count += 1
+
+    return zero_area_count
 
 
 def sequence_data(ground_truth_frames, prediction_frames, class_id):
@@ -147,6 +162,7 @@ def mot(ground_truth_sequences, prediction_sequences):
     }
     results = {name: {class_id: {} for class_id in IDS} for name in algorithms}
     per_video = {}
+    zero_area_predictions = {}
 
     for video, gt_frames in ground_truth_sequences.items():
         predicted_frames = prediction_sequences[video]
@@ -155,7 +171,11 @@ def mot(ground_truth_sequences, prediction_sequences):
             raise ValueError(f'{video}: predictions must cover every ground-truth frame')
 
         validate_frames(gt_frames, f'{video} ground truth')
-        validate_frames(predicted_frames, f'{video} predictions')
+        # Boundary clipping can collapse emitted boxes. Keep them with zero IoU
+        # so they are false positives, rather than dropping errors from scoring.
+        zero_area_predictions[video] = validate_frames(
+            predicted_frames, f'{video} predictions', allow_zero_area=True,
+        )
 
         for class_id in IDS:
             data = sequence_data(gt_frames, predicted_frames, class_id)
@@ -187,6 +207,9 @@ def mot(ground_truth_sequences, prediction_sequences):
         'class_ids': list(IDS),
         'clear_identity_iou_threshold': 0.5,
         'hota_iou_thresholds': algorithms['HOTA'].array_labels.tolist(),
+        'zero_area_prediction_policy': 'retained with zero IoU; counted as false positives',
+        'zero_area_predictions': sum(zero_area_predictions.values()),
+        'zero_area_predictions_per_video': zero_area_predictions,
         'prediction_policy': 'all emitted boxes; no additional confidence cutoff or maxDets cap',
         'annotation_policy': 'same mapped annotations as COCO; no extra crowd/ignore-region preprocessing',
         'per_video': per_video,
