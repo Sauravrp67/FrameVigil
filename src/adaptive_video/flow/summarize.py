@@ -1,4 +1,4 @@
-"""Summarize explicit shadow/reliability outputs without importing old results."""
+"""Summarize explicit shadow/reliability outputs"""
 
 from pathlib import Path
 

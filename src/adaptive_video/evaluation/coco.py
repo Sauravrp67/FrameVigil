@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Dict, Set
+from collections import defaultdict
 import contextlib,io
 import numpy as np
 from pycocotools.coco import COCO
@@ -166,3 +167,38 @@ def predrows(ds,id):
               d['box_xyxy'][3]-d['box_xyxy'][1]]) 
         for d in ds]
 
+
+
+def localization_curve(evaluator):
+    """AP at each IoU threshold, all object sizes, maxDets=300."""
+    precision = evaluator.eval['precision'][:, :, :, 0, -1]
+
+    return [
+        {'iou': float(threshold), 'AP_percent': as_percent(avg(precision[index]))}
+        for index, threshold in enumerate(evaluator.params.iouThrs)
+    ]
+
+
+def as_percent(value):
+    return None if value is None else 100 * value
+
+
+def frame_errors(evaluator, threshold=0.75):
+    """Count COCO TP/FP/FN per image at one IoU, retaining its ignore policy."""
+    threshold_index = int(np.flatnonzero(np.isclose(evaluator.params.iouThrs, threshold))[0])
+    counts = defaultdict(lambda: {'TP75': 0, 'FP75': 0, 'FN75': 0})
+
+    for result in evaluator.evalImgs:
+        if result is None or result['aRng'] != evaluator.params.areaRng[0]:
+            continue
+
+        valid = ~result['dtIgnore'][threshold_index]
+        matched = result['dtMatches'][threshold_index] > 0
+        true_positive = int((matched & valid).sum())
+        ground_truth_count = int((~result['gtIgnore'].astype(bool)).sum())
+        row = counts[result['image_id']]
+        row['TP75'] += true_positive
+        row['FP75'] += int((~matched & valid).sum())
+        row['FN75'] += ground_truth_count - true_positive
+
+    return counts

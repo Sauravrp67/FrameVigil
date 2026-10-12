@@ -157,7 +157,7 @@ def test_full_evaluator_refuses_a_missing_video(monkeypatch, tmp_path):
     monkeypatch.setattr(
         evaluate,
         'load_results',
-        lambda *args: {'original': [dict(video=source.videos[0], outputs=[[]])]},
+        lambda *args: {'constant_acceleration': [dict(video=source.videos[0], outputs=[[]])]},
     )
 
     with pytest.raises(ValueError, match='every selected dataset video'):

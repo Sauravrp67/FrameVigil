@@ -6,7 +6,7 @@ import yaml
 
 from .. import dataset as serialization
 from ..project import ROOT
-
+import cv2
 
 class EvaluationDataset:
     """Use a generated frame inventory, retaining stable per-frame identities."""
@@ -53,7 +53,6 @@ class EvaluationDataset:
         return serialization.read(path)
 
     def image(self, frame):
-        import cv2
         image = cv2.imread(str(self.root / frame['path']))
 
         if image is None or image.shape[:2] != (frame['height'], frame['width']):

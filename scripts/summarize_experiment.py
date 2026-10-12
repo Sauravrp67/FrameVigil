@@ -1,4 +1,5 @@
-"""Evaluate a completed live campaign and summarize its measured accuracy, latency and energy."""
+"""Recompute pooled/per-video COCO and tracking metrics from saved predictions.
+"""
 
 import argparse
 from _checkout import add_source_directory

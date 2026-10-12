@@ -1,4 +1,4 @@
-"""Generate a hashed inventory for all 200 validation videos; no inference."""
+"""Generate a hashed inventory for all 200 validation videos"""
 
 import argparse
 from _checkout import add_source_directory

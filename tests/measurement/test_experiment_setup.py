@@ -59,10 +59,10 @@ def test_experiment_configuration_is_not_hash_enforced(tmp_path, monkeypatch):
 
 
 def test_completed_trial_resume_needs_no_configuration_hash(tmp_path):
-    destination = tmp_path / 'results/live/r0_original_video.json.gz'
+    destination = tmp_path / 'results/live/r0_constant_acceleration_video.json.gz'
 
     save(destination, {'status': 'PASS', 'power_backend': 'none'})
-    trial(None, 'original', 'video', 0, {}, tmp_path, None)
+    trial(None, 'constant_acceleration', 'video', 0, {}, tmp_path, None)
 
     assert not (tmp_path / 'integrity.json').exists()
 

@@ -13,7 +13,7 @@ from .representation import LogSizeCV, AspectHeightCV
 from .visibility import VisibilityDetector, ExistenceTrack
 
 VARIANTS = {
-    'original': (AdaptiveDetectionTracker, BoxTrack, 'original'),
+    'constant_acceleration': (AdaptiveDetectionTracker, BoxTrack, 'constant_acceleration'),
     'raw_both': (DetectorOutputTracker, BoxTrack, 'raw_both'),
     'cv8': (DetectorOutputTracker, ConstantVelocity, 'raw_both'),
     'damped_ca10': (DetectorOutputTracker, DampedAcceleration, 'raw_both'),

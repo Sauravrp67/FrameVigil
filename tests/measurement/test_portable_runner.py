@@ -30,7 +30,7 @@ def test_trial_without_power_never_starts_sampler(monkeypatch, tmp_path):
 
     runner.trial(
         model,
-        variant='always_on',
+        variant='baseline',
         video='clip',
         repeat=0,
         freeze={},
@@ -39,7 +39,7 @@ def test_trial_without_power_never_starts_sampler(monkeypatch, tmp_path):
         power_backend='none',
     )
 
-    record = read(tmp_path / 'results/live/r0_always_on_clip.json.gz')
+    record = read(tmp_path / 'results/live/r0_baseline_clip.json.gz')
 
     assert record['status'] == 'PASS'
     assert record['calls'] == 1

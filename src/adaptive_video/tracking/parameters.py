@@ -1,7 +1,4 @@
-"""Tracking parameters, in normalized coordinates unless stated.
-
-Noise entries are standard deviations; covariance construction squares them.
-These are inherited experimental settings, not newly calibrated uncertainty.
+"""Tracking parameters, in normalized coordinates.
 """
 MAX_SKIP = 15
 MIN_HITS_CONFIRM = 3

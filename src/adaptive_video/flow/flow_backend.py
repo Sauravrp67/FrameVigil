@@ -1,6 +1,4 @@
 """Compute fresh VPI hardware flow between consecutive images.
-
-acquire() returns float32 [dx, dy] displacements in pixels.
 """
 
 import time

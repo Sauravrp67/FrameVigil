@@ -12,9 +12,9 @@ dataset:
     end: 10
 
 experiment:
-  # Choose any registered variants. always_on is the detector-only baseline.
+  # Choose any registered variants. baseline runs the detector on every frame.
   variants:
-    - original
+    - constant_acceleration
     - raw_both
     - cv8
     - damped_ca10
@@ -24,7 +24,7 @@ experiment:
     - camera_ca10
     - appearance_ca10
     - visibility_ca10
-    - always_on
+    - baseline
 
   repeats: 1
 

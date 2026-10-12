@@ -1,8 +1,4 @@
-"""Unit-height relative-depth CV state. This is not measured metric 3D.
-
-Virtual camera uses normalized focal lengths 1 and principal point (.5,.5).
-u=[X,Y,Z,A], where Z=1/h, X=(cx-.5)/h, Y=(cy-.5)/h, A=w/h.
-Object height is fixed to one arbitrary unit, an explicit testable assumption.
+"""Unit-height relative-depth CV state.
 """
 
 import numpy as np

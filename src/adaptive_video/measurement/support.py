@@ -11,7 +11,8 @@ from . import guard
 
 def configure(variant):
     """Reset identities and counters, then construct this variant's controller."""
-    if variant == 'always_on':
+
+    if variant == 'baseline':
         BoxTrack.reset_id_counter()
         return None, None, None
 

@@ -1,8 +1,4 @@
 """CV8 in alternative box coordinates, measured in original normalized box units.
-
-Nonlinear observation uses a first-order extended Kalman filter.
-Full eight-dimensional Jacobians transform birth and process covariance;
-policy, scores and association all observe normalized cx,cy,w,h covariance.
 """
 
 import numpy as np

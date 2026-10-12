@@ -1,8 +1,7 @@
 """Build the study's TensorRT engine on the GPU where measurement will run.
 
-Requires compatible TensorRT Python bindings (10+) and ONNX. The standard
-scripts/setup.sh installs ONNX with the scientific dependencies. Use the NVIDIA TensorRT installation for your platform;
-Jetson normally supplies its bindings through JetPack. No dataset is required.
+Requires compatible TensorRT Python bindings (10+) and ONNX. Use the NVIDIA TensorRT installation for your platform;
+Jetson normally supplies its bindings through JetPack.
 """
 
 import argparse

@@ -110,12 +110,12 @@ def prepare_full_protocol(out, dataset_manifest, repeats=None, config=None):
     settings = configuration.get('experiment', {})
     dataset_settings = configuration.get('dataset', {})
 
-    variants = settings.get('variants', list(VARIANTS) + ['always_on'])
+    variants = settings.get('variants', list(VARIANTS) + ['baseline'])
 
     if not isinstance(variants, list) or not variants:
         raise ValueError('experiment.variants must be a nonempty list')
 
-    available = set(VARIANTS) | {'always_on'}
+    available = set(VARIANTS) | {'baseline'}
 
     for variant in variants:
         if not isinstance(variant, str) or variant not in available:

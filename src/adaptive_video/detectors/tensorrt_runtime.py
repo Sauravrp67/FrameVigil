@@ -1,4 +1,4 @@
-"""Model-independent TensorRT loading, binding and execution."""
+"""TensorRT loading, binding and execution."""
 
 import json
 from pathlib import Path

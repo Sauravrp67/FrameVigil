@@ -95,10 +95,10 @@ class DetectorOutputTracker(AdaptiveDetectionTracker):
         return result
 
 
-def emit(detector, variant='original'):
+def emit(detector, variant='constant_acceleration'):
     """Publish track outputs"""
     choices = {
-        'original': (False, False),
+        'constant_acceleration': (False, False),
         'raw_boxes': (True, False),
         'raw_scores': (False, True),
         'raw_both': (True, True),

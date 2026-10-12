@@ -1,4 +1,4 @@
-"""Validate current VDD_IN module-power telemetry in a prepared experiment; does not launch the trial campaign."""
+"""Validate current VDD_IN module-power telemetry in a prepared experiment."""
 import argparse
 from _checkout import add_source_directory
 

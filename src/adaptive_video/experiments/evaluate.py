@@ -1,7 +1,4 @@
-"""Evaluate completed predictions and summarize recorded live measurements.
-
-Dataset selection is explicit; predictions must come from a completed new run.
-Metric definitions belong to evaluation/coco.py and evaluation/mot.py.
+"""Evaluate predictions and recorded live measurements.
 """
 
 from collections import defaultdict
@@ -10,7 +7,8 @@ from pathlib import Path
 
 from .. import dataset
 from ..evaluation.dataset import EvaluationDataset
-from ..evaluation.coco import coco, ground_truth, predrows
+from ..evaluation.coco import coco, ground_truth, predrows, localization_curve, frame_errors
+from .statistics import timing_summary, frame_rows, power_rows, write_report_tables
 from ..evaluation.mot import METRIC_NAMES, mot
 from ..measurement.power import integrate
 from ..project import ROOT, read, save
@@ -187,6 +185,7 @@ def summarize_resources(folder, records):
         'trials': len(records),
         'latency_ms_per_frame': 1000 * total_seconds / total_frames,
         'module_joules_per_frame': total_joules / total_frames if energy_available else None,
+        'module_average_W': total_joules / total_seconds if energy_available else None,
         'detector_calls': detector_calls,
         'skipped_frames': skipped_frames,
         'skipped_frames_percent': 100 * skipped_frames / total_frames,
@@ -224,11 +223,11 @@ def evaluate_tracking(records, annotations_by_image, live, source):
 
     objects = [obj for frames in prediction_sequences.values() for frame in frames for obj in frame]
     missing_ids = sum('track_id' not in obj for obj in objects)
-    detector_only = all(record['variant'] == 'always_on' for record in records)
+    detector_only = all(record['variant'] == 'baseline' for record in records)
 
     if detector_only or (objects and missing_ids == len(objects)):
         reason = (
-            'The always-on detector has no temporal identity association.'
+            'The baseline detector has no temporal identity association.'
             if detector_only else 'Saved predictions do not contain track IDs; rerun with ID-preserving outputs.'
         )
 
@@ -275,6 +274,11 @@ def run(folder, output, live=False, dataset_manifest=None):
     annotations, annotations_by_image = ground_truth(source)
     rows = []
     details = {}
+    curves = []
+    videos = []
+    frames_table = []
+    timing = []
+    power = []
     reference_population = None
     
     for variant, records in groups.items():
@@ -286,7 +290,10 @@ def run(folder, output, live=False, dataset_manifest=None):
         elif population != reference_population:
             raise ValueError('Variants must share the same frame population')
 
-        metrics, _ = coco(annotations, predictions, image_ids)
+        print(f'Evaluating {variant}...', flush=True)
+        metrics, evaluator = coco(annotations, predictions, image_ids)
+        curves.extend({'variant': variant, **point} for point in localization_curve(evaluator))
+        errors = frame_errors(evaluator)
         tracking_metrics, tracking_details = evaluate_tracking(records, annotations_by_image, live, source)
         metrics['tracking'] = {'metrics': tracking_metrics, **tracking_details}
         details[variant] = metrics
@@ -307,10 +314,54 @@ def run(folder, output, live=False, dataset_manifest=None):
 
         if live:
             row.update(summarize_resources(folder, records))
+            timing.append({'variant': variant, **timing_summary(records)})
+            by_video = defaultdict(list)
+
+            for record in records:
+                by_video[record['video']].append(record)
+
+                if record['repeat'] == 0:
+                    frames_table.extend(frame_rows(record, source.frames(record['video']), errors))
+
+                power.extend(power_rows(folder, record))
+
+            for video, trials in sorted(by_video.items()):
+                video_predictions, video_ids = collect_predictions(trials, live, source)
+                video_metrics, _ = coco(annotations, video_predictions, video_ids)
+                videos.append({
+                    'variant': variant, 'video': video,
+                    'AP50_95_percent': percentage(video_metrics['AP50_95']),
+                    'AP50_percent': percentage(video_metrics['AP50']),
+                    'AP75_percent': percentage(video_metrics['AP75']),
+                    **summarize_resources(folder, trials),
+                })
 
         rows.append(row)
 
     output.mkdir(parents=True, exist_ok=True)
     dataset.csvwrite(output / 'summary.csv', rows)
+    write_report_tables(rows, timing, output)
     save(output / 'metrics.json', details)
+    dataset.csvwrite(output / 'localization.csv', curves)
+
+    if live:
+        dataset.csvwrite(output / 'per_video.csv', videos)
+        dataset.csvwrite(output / 'frames.csv', frames_table)
+        dataset.csvwrite(output / 'timing.csv', timing)
+
+        if power:
+            dataset.csvwrite(output / 'power.csv', power)
+
+        save(output / 'analysis.json', {
+            'experiment': str(folder),
+            'dataset_manifest': str(dataset_manifest),
+            'videos': len(expected_videos),
+            'repeats': protocol['repeats'],
+            'accuracy': 'Pooled COCO AP; repeat 0 only; maxDets=300. Per-video AP is diagnostic.',
+            'timing': 'Controller/output includes emission. Other is measured wall time minus components.',
+            'frame_errors': 'COCO TP/FP/FN at IoU 0.75, all sizes, original scores, maxDets=300.',
+            'power': 'Module VDD_IN; interpolated workload boundaries; cumulative energy uses wall time.',
+            'power_validation': read(folder / 'results/power_check.json') if power else None,
+            'limitations': 'No per-frame power timestamps, separate ERD timing, or run-to-run uncertainty with one repeat.',
+        })
     print(f'Evaluated {len(rows)} variants on {len(reference_population)} unique frames', flush=True)

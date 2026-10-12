@@ -56,7 +56,7 @@ class DampedAcceleration(BoxTrack):
 
 
 TRACKS = {
-    'original': BoxTrack,
+    'constant_acceleration': BoxTrack,
     'raw_both': BoxTrack,
     'cv8': ConstantVelocity,
     'damped_ca10': DampedAcceleration,

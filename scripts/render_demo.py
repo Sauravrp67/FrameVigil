@@ -1,10 +1,12 @@
-"""Render a selected sequence from complete saved prediction files; no inference."""
+"""Render a selected sequence from complete saved prediction files."""
 
 import argparse
 
 from _checkout import add_source_directory
 
 add_source_directory()
+
+from adaptive_video.experiments.render import run
 
 
 def main():
@@ -17,8 +19,6 @@ def main():
     parser.add_argument('--fps', type=float, default=5.0,
                         help='Playback speed; default 5 FPS matches BDD100K MOT sampling')
     args = parser.parse_args()
-
-    from adaptive_video.experiments.render import run
 
     run(args.dataset_manifest, args.predictions, args.video, args.output, args.fps)
 

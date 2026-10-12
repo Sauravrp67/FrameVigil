@@ -1,8 +1,12 @@
-"""Video orchestration: advance, decide, observe, reconcile, publish.
+"""
+Video orchestration: advance, decide, observe, reconcile, publish.
 
-Filtering, assignment, lifecycle and output are separate operations. BoxTrack types
-are injected per controller; selecting a variant never changes module globals.
-Method attribution is documented in licenses/ALBIREO-MIT.txt.
+Adapted from:
+    Albireo - Adaptive Object Detection and Tracking
+    https://github.com/amirtaherin/albireo
+
+Original implementation by amirtaherin.
+Modified and refactored for integration into this project.
 """
 
 from ..detectors.empty_scene import load_scene_classifier, classify_scene

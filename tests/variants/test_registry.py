@@ -18,7 +18,7 @@ def stub_scene_classifier(monkeypatch):
 
 
 def test_all_families_present_and_reset_does_not_leak_track_identity():
-    for name in [*VARIANTS, 'always_on']:
+    for name in [*VARIANTS, 'baseline']:
         detector, track_type, emission = configure(name)
 
         if detector is None:
@@ -32,7 +32,7 @@ def test_all_families_present_and_reset_does_not_leak_track_identity():
 
         assert b.track_id == 0 and not detector.tracks
 
-    configure('original')
+    configure('constant_acceleration')
 
 
 def test_final_digest_covers_covariance_and_appearance_memory():
@@ -49,7 +49,7 @@ def test_final_digest_covers_covariance_and_appearance_memory():
     detector.tracks[0].P[0, 0] *= 2
 
     assert digest(extended_state(detector, track_type)) != b
-    configure('original')
+    configure('constant_acceleration')
 
 
 def test_payload_does_not_double_count_shared_arrays():
@@ -69,7 +69,7 @@ def test_output_parity_rejects_box_class_and_confidence_drift():
 
 def test_registry_contains_expected_variants_and_output_modes():
     assert set(VARIANTS) == {
-        'original',
+        'constant_acceleration',
         'raw_both',
         'cv8',
         'damped_ca10',
@@ -80,5 +80,5 @@ def test_registry_contains_expected_variants_and_output_modes():
         'appearance_ca10',
         'visibility_ca10',
     }
-    assert VARIANTS['original'] == (AdaptiveDetectionTracker, BoxTrack, 'original')
+    assert VARIANTS['constant_acceleration'] == (AdaptiveDetectionTracker, BoxTrack, 'constant_acceleration')
     assert VARIANTS['raw_both'] == (DetectorOutputTracker, BoxTrack, 'raw_both')

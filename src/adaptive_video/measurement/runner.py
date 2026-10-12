@@ -229,16 +229,16 @@ def trial(model, variant, video, repeat, freeze, experiment, source, power_backe
         first_repeat = common.read(experiment / 'results/live' / f'r0_{variant}_{video}.json.gz')
         exact_repeat(data, first_repeat)
 
-    # Check raw detector parity here when the corresponding always-on trial is
-    # already present. This check alone does not cover a later always-on trial.
-    always_path = experiment / 'results/live' / f'r{repeat}_always_on_{video}.json.gz'
+    # Check raw detector parity here when the corresponding baseline detector trial is
+    # already present. This check alone does not cover a later baseline detector trial.
+    baseline_path = experiment / 'results/live' / f'r{repeat}_baseline_{video}.json.gz'
 
-    if variant != 'always_on' and always_path.exists():
-        always_on = common.read(always_path)
+    if variant != 'baseline' and baseline_path.exists():
+        baseline_record = common.read(baseline_path)
 
         for frame_index, checksum in enumerate(data['detector_raw_hashes']):
             if checksum is not None:
-                assert checksum == always_on['detector_raw_hashes'][frame_index], (
+                assert checksum == baseline_record['detector_raw_hashes'][frame_index], (
                     variant, video, frame_index, 'raw detector drift',
                 )
 
@@ -268,7 +268,7 @@ def main(experiment, power_backend='none'):
         raise RuntimeError('Measurement requires NumPy >= 1.26 and OpenCV >= 4.8')
     if power_backend == 'vdd_in':
         assert common.read(experiment / 'results/power_check.json')['status'] == 'PASS'
-    available_variants = set(VARIANTS) | {'always_on'}
+    available_variants = set(VARIANTS) | {'baseline'}
 
     if not freeze['arms'] or not set(freeze['arms']) <= available_variants:
         raise ValueError('Experiment contains an unknown variant or no variants')

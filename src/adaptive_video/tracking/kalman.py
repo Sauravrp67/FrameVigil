@@ -1,12 +1,18 @@
 """Normalized box estimation and track lifecycle.
 
 The probability operations are functions; BoxTrack owns the evolving numerical
-state and lifecycle counters. See licenses/ALBIREO-MIT.txt for method provenance.
+state and lifecycle counters.
+
+Adapted from:
+    Albireo - Object Tracking Implementation
+    https://github.com/amirtaherin/albireo
+
+Original implementation by amirtaherin.
+Modified and refactored for integration into this project.
 """
 import numpy as np
 from scipy.linalg import solve, LinAlgError
 from .parameters import *
-
 
 def transition_matrix():
     matrix = np.eye(10, dtype=np.float64)

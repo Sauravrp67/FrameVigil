@@ -14,7 +14,7 @@ from adaptive_video.experiments import figures, render
 
 def write_table(path, energy=False):
     header = 'variant,AP50_95_percent,unique_frames,latency_ms_per_frame'
-    values = ['original,32,39973,10', 'raw_both,34,39973,11']
+    values = ['constant_acceleration,32,39973,10', 'raw_both,34,39973,11']
 
     if energy:
         header += ',module_joules_per_frame'
@@ -24,20 +24,22 @@ def write_table(path, energy=False):
 
 
 @pytest.mark.parametrize('energy', [False, True])
-def test_plot_labels_actual_population_and_available_costs(tmp_path, energy):
+def test_plots_only_available_diagnostics(tmp_path, energy):
     source = tmp_path / 'summary.csv'
     write_table(source, energy)
-    paths = figures.run(source, tmp_path / 'figures')
-    svg = paths[1].read_text()
+    (tmp_path / 'localization.csv').write_text(
+        'variant,iou,AP_percent\nconstant_acceleration,0.5,40\nraw_both,0.5,42\n'
+    )
+    output = tmp_path / 'figures'
+    paths = figures.run(source, output)
 
-    assert paths[0].stat().st_size > 0
-    assert '39,973 unique frames' in svg
-    assert '2 variants' in svg
-    assert '606' not in svg.split('unique frames')[0][-50:]
-    assert ('Module-input energy' in svg) == energy
+    assert {path.name for path in paths} == {'localization.png', 'localization.svg'}
+    assert all(path.stat().st_size > 0 for path in paths)
+    assert 'Pooled AP (%)' in (output / 'localization.svg').read_text()
+    assert not list(output.glob('*.md'))
 
     with pytest.raises(FileExistsError):
-        figures.run(source, tmp_path / 'figures')
+        figures.run(source, output)
 
 
 @pytest.mark.parametrize(
@@ -90,7 +92,7 @@ def prediction_fixture(tmp_path, monkeypatch):
     )
     paths = []
 
-    for variant in ['original', 'raw_both']:
+    for variant in ['constant_acceleration', 'raw_both']:
         path = tmp_path / f'{variant}.json.gz'
         detection = dict(
             box_xyxy=[10, 10, 50, 50], class_id=2, conf=0.2, track_id='object-7'
@@ -173,7 +175,7 @@ def test_missing_ids_and_trace_remain_missing(tmp_path):
         path,
         dict(
             video='clip',
-            variant='always_on',
+            variant='baseline',
             outputs=[[dict(box_xyxy=[1, 1, 5, 5], class_id=2, conf=0.7)]],
         ),
     )

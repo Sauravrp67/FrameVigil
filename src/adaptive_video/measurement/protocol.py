@@ -1,5 +1,4 @@
-"""Shared frame-decision fields and always-on detector output conversion."""
-
+"""Shared frame-decision fields and baseline detector output conversion."""
 
 ACTION_KEYS = [
     'frame_idx',
@@ -13,7 +12,7 @@ ACTION_KEYS = [
 
 
 def always_rows(result):
-    """Keep the six evaluated classes; the always-on detector has no track IDs."""
+    """Keep the six evaluated classes; the baseline detector has no track IDs."""
     rows = []
 
     for detection in result[0].boxes.data.detach().cpu().numpy():

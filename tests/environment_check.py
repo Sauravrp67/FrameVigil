@@ -1,6 +1,4 @@
 """Functional installation checks, run automatically by scripts/setup.sh.
-
-Run directly with the environment's Python. CUDA builds exercise the selected GPU; CPU-only builds exercise the CPU. No checkpoints or dataset are needed.
 """
 
 import importlib

@@ -1,7 +1,4 @@
 """Serialization helpers for dataset inventories and newly generated results.
-
-Dataset selection is explicit through evaluation.dataset.EvaluationDataset.
-This module does not contain a default population or load experiment outputs.
 """
 
 import csv

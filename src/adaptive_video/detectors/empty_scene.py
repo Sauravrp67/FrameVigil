@@ -1,7 +1,13 @@
-"""Small image classifier for deciding whether an empty scene needs detection.
-
+"""
+Small image classifier for deciding whether an empty scene needs detection.
 Layer names match the included checkpoint. No external model code is loaded.
-See licenses/ALBIREO-MIT.txt for the checkpoint and method provenance.
+
+Adapted from:
+    Albireo - ERD Fine-tuning
+    https://github.com/amirtaherin/albireo/tree/main/erd_finetune
+
+Original implementation by amirtaherin.
+Modified for integration into this project.
 """
 import cv2
 import numpy as np

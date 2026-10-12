@@ -1,4 +1,4 @@
-"""Create an experiment directory containing the trial schedule; no model execution."""
+"""Create an experiment directory containing the trial schedule."""
 
 import argparse
 from _checkout import add_source_directory

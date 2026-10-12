@@ -82,7 +82,7 @@ def collect_video(source, video, tracker, model, backend, device='cuda', synchro
             'image_id': frame['image_id'],
             'ran_detector': result['ran_inference'],
             'reasons': reasons,
-            'baseline': emit(tracker, 'original'),
+            'baseline': emit(tracker, 'constant_acceleration'),
             'alternative': alternative,
             'failure': failure,
             'baseline_state_sha256': digest(state(tracker)),
@@ -119,7 +119,7 @@ def collect(dataset_manifest, output):
     detector_costs = []
 
     for video in source.videos:
-        tracker, _, _ = configure('original')
+        tracker, _, _ = configure('constant_acceleration')
         warmup_image = source.image(source.frames(video)[0])
 
         for _ in range(3):

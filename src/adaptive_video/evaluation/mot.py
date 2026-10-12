@@ -1,8 +1,4 @@
-"""Multi-object tracking metrics for ordered, per-video prediction sequences.
-
-TrackEval performs the matching and metric calculations. This adapter uses the
-same six mapped classes and continuous xyxy geometry as our COCO evaluator.
-It is a project protocol, not the official eight-class BDD100K leaderboard.
+"""Multi-object tracking metrics for ordered, per-video prediction sequences. Trackeval is used for MOT metrics calculations.
 """
 
 from importlib.metadata import version

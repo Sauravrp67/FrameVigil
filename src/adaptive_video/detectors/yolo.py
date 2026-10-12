@@ -1,4 +1,4 @@
-"""YOLO11/YOLO26 loading, export and Ultralytics predictor integration."""
+"""YOLO loading, export and Ultralytics predictor integration."""
 
 import torch
 from ultralytics import YOLO

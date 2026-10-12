@@ -72,7 +72,7 @@ class VisibilityDetector(DetectorOutputTracker):
             )
 
             if track.existence < 0.5:
-                # Original unmatched-track handling will then decline rescue.
+                # Constant-acceleration unmatched-track handling will then decline rescue.
                 track.state = 'lost'
                 self.visibility_info['rescue_vetoes'] += 1
 

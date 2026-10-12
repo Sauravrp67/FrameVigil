@@ -128,7 +128,7 @@ class AppearanceDetector(DetectorOutputTracker):
                     matched_detection_indices.append(
                         remaining_detection_indices[column_index]
                     )
-        # These are the actual pairs subsequently consumed by original step.
+        # These are the actual pairs subsequently consumed by the constant-acceleration step.
 
         self.association_pairs = [
             (active_tracks[i].track_id, j)

@@ -1,7 +1,4 @@
-"""Analyze computed optical flow without changing the live tracker.
-
-This module does not load images, calculate optical flow, read a flow cache, or
-use ground truth. A caller supplies the flow field. A live caller supplies newly computed fields.
+"""Analyze computed optical flow.
 """
 
 import copy

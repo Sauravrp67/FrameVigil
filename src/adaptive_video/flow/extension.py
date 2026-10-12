@@ -1,4 +1,4 @@
-"""Correct track geometry with optical flow after the scheduler skips detection.
+"""Correct track geometry with optical flow.
 """
 
 import time
@@ -127,7 +127,7 @@ def make_tracker(backend, mode='selective'):
 
     Modes: off disables flow; every attempts it on each otherwise eligible
     skipped frame; selective additionally checks predicted movement and age.
-    The controller inherits the original constructor without changing defaults.
+    The controller inherits the adaptive tracker constructor without changing defaults.
     """
     assert mode in ['off', 'every', 'selective']
 
@@ -140,7 +140,7 @@ def make_tracker(backend, mode='selective'):
             previous_image = getattr(self, 'previous_image', None)
             frame_index = self.frame_idx
 
-            # Let the original scheduler decide and process the current frame.
+            # Let the adaptive scheduler decide and process the current frame.
             result = super().step(frame, model, device)
             result.update(
                 ran_flow=False,

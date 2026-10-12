@@ -1,4 +1,4 @@
-"""Fresh flow analysis works without historical predictions or module globals."""
+"""Fresh flow analysis works"""
 
 from types import SimpleNamespace
 
@@ -211,7 +211,7 @@ def test_collector_keeps_actual_baseline_trajectory_and_never_reads_labels(
         result = baseline.step(image, Model(), 'cpu')
 
         assert row['ran_detector'] == result['ran_inference']
-        assert row['baseline'] == emit(baseline, 'original')
+        assert row['baseline'] == emit(baseline, 'constant_acceleration')
         assert row['baseline_state_sha256'] == digest(state(baseline))
 
 

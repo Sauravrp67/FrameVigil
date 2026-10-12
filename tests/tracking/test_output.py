@@ -155,20 +155,20 @@ def test_geometry_and_score_are_separate(monkeypatch):
     tracker_instance.step(image, StubDetector([[10, 10, 50, 50, 0.9, 2]]), 'cpu')
     tracker_instance.tracks[0].P *= 10
     tracker_instance.step(image, StubDetector([[12.5, 10, 52.5, 50, 0.8, 2]]), 'cpu')
-    original_output = emit(tracker_instance)[0]
+    baseline_output = emit(tracker_instance)[0]
     box_output = emit(tracker_instance, 'raw_boxes')[0]
     score_output = emit(tracker_instance, 'raw_scores')[0]
 
     assert (
-        box_output['conf'] == original_output['conf']
-        and score_output['box_xyxy'] == original_output['box_xyxy']
+        box_output['conf'] == baseline_output['conf']
+        and score_output['box_xyxy'] == baseline_output['box_xyxy']
     )
     assert box_output['box_xyxy'] == [12.5, 10, 52.5, 50] and score_output[
         'conf'
     ] == pytest.approx(0.8)
 
 
-def test_always_on_control_preserves_floating_point_boxes():
+def test_baseline_control_preserves_floating_point_boxes():
     boxes = torch.tensor(
         [[1.25, 2.5, 10.75, 20.125, 0.9, 2], [1.0, 2.0, 3.0, 4.0, 0.8, 9]]
     )

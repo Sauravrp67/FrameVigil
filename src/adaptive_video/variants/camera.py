@@ -1,7 +1,4 @@
-"""Causal sparse-LK/RANSAC camera compensation for original CA10 tracks.
-
-Sparse optical flow estimates background motion between consecutive frames.
-An accepted affine transform adjusts each track mean and covariance.
+"""Causal sparse-LK/RANSAC camera compensation for constant-acceleration tracks.
 """
 
 import time

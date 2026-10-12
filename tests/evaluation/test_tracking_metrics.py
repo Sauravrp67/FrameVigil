@@ -136,7 +136,7 @@ def test_wrapper_does_not_invent_ids_for_old_predictions(monkeypatch):
     )
     prediction = box()
     del prediction['track_id']
-    records = [dict(variant='original', video='clip', outputs=[[prediction]])]
+    records = [dict(variant='constant_acceleration', video='clip', outputs=[[prediction]])]
     metrics, details = evaluate.evaluate_tracking(
         records, {1: [box()]}, live=False, source=source
     )
@@ -153,8 +153,8 @@ def test_wrapper_uses_only_first_repeat(monkeypatch):
         videos=['clip'], frames=lambda video=None: [{'image_id': 1}]
     )
     records = [
-        dict(variant='original', video='clip', repeat=0, outputs=[[box(10)]]),
-        dict(variant='original', video='clip', repeat=1, outputs=[[]]),
+        dict(variant='constant_acceleration', video='clip', repeat=0, outputs=[[box(10)]]),
+        dict(variant='constant_acceleration', video='clip', repeat=1, outputs=[[]]),
     ]
     metrics, details = evaluate.evaluate_tracking(
         records, {1: [box()]}, live=True, source=source
@@ -189,21 +189,21 @@ def test_experiment_calls_detection_and_tracking_evaluators(monkeypatch, tmp_pat
     dataset = source
     source = tmp_path / 'experiment'
     save(
-        source / 'original/clip.json.gz',
-        dict(variant='original', video='clip', outputs=[[box(10)]]),
+        source / 'constant_acceleration/clip.json.gz',
+        dict(variant='constant_acceleration', video='clip', outputs=[[box(10)]]),
     )
     save(
-        source / 'always_on/clip.json.gz',
-        dict(variant='always_on', video='clip', outputs=[[box(10)]]),
+        source / 'baseline/clip.json.gz',
+        dict(variant='baseline', video='clip', outputs=[[box(10)]]),
     )
     destination = tmp_path / 'metrics'
     evaluate.run(source, destination, dataset_manifest='explicit-manifest.json')
     results = json.loads((destination / 'metrics.json').read_text())
 
-    assert results['original']['AP50_95'] == pytest.approx(1)
-    assert results['original']['tracking']['metrics']['HOTA'] == 1
-    assert results['always_on']['tracking']['status'] == 'unavailable'
-    assert results['always_on']['tracking']['metrics']['MOTA'] is None
+    assert results['constant_acceleration']['AP50_95'] == pytest.approx(1)
+    assert results['constant_acceleration']['tracking']['metrics']['HOTA'] == 1
+    assert results['baseline']['tracking']['status'] == 'unavailable'
+    assert results['baseline']['tracking']['metrics']['MOTA'] is None
     assert 'MOTA_percent' in (destination / 'summary.csv').read_text()
 
 

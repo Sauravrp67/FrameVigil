@@ -1,7 +1,4 @@
 """Explicit Python helper for repeating analysis of a newly collected capture.
-
-Reviewers may run shadow, reliability and summary separately. This helper does
-not download inputs, run inference, copy historical results or alter module globals.
 """
 
 from pathlib import Path
