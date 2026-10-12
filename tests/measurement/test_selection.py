@@ -140,3 +140,21 @@ def test_new_registered_pipeline_and_repeat_override(tmp_path, inventory, monkey
     assert protocol['repeats'] == 1
     assert len(protocol['videos']) == 10
     assert len(protocol['schedule']) == 10
+
+
+@pytest.mark.parametrize('backend', ['torch', 'tensorrt'])
+@pytest.mark.parametrize('precision', ['fp32', 'tf32'])
+def test_preparation_records_runtime_choices(tmp_path, inventory, backend, precision):
+    config = tmp_path / 'study.yaml'
+    config.write_text(yaml.safe_dump({
+        'inference': {'backend': backend, 'precision': precision, 'nms': 'native'},
+    }))
+    output = tmp_path / 'experiment'
+
+    stages.prepare(output, inventory, config=config)
+    settings = read(output / 'manifests/freeze.json')['inference']
+
+    assert settings['backend'] == backend
+    assert settings['precision'] == precision
+    assert settings['nms'] == 'native'
+    assert settings['engine'].endswith(f'_{precision}.engine')

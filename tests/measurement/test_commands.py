@@ -13,6 +13,7 @@ from adaptive_video.project import ROOT
 STAGES = [
     'prepare_evaluation_dataset',
     'prepare_experiment',
+    'build_detector_engine',
     'validate_power',
     'measure_experiment',
     'summarize_experiment',

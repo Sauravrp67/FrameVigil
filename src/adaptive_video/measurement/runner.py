@@ -19,6 +19,7 @@ from packaging.version import Version
 
 from .. import dataset as common
 from ..detectors.yolo import load_detector
+from ..detectors.configuration import inference_settings
 from pathlib import Path
 
 from ..project import ROOT
@@ -52,6 +53,7 @@ class TimedDetector:
 
 def trial(model, variant, video, repeat, freeze, experiment, source, power_backend='none'):
     """Measure one complete video, excluding setup and final file serialization."""
+    runtime_settings = inference_settings(freeze.get('inference', {'nms': 'custom'}))
     destination = experiment / 'results/live' / f'r{repeat}_{variant}_{video}.json.gz'
     power_path = experiment / 'results/power' / f'r{repeat}_{variant}_{video}.json'
 
@@ -62,6 +64,11 @@ def trial(model, variant, video, repeat, freeze, experiment, source, power_backe
 
         if recorded_backend != power_backend:
             raise ValueError('Choose a new experiment directory when changing power backend')
+
+        previous_settings = completed.get('inference', inference_settings({'nms': 'custom'}))
+
+        if previous_settings != runtime_settings:
+            raise ValueError('Choose a new experiment directory when changing detector runtime')
 
         return
 
@@ -204,6 +211,7 @@ def trial(model, variant, video, repeat, freeze, experiment, source, power_backe
         'wall_s': end - start,
         'energy_joules': joules,
         'power_backend': power_backend,
+        'inference': runtime_settings,
         'torch_peak_allocated_bytes': torch.cuda.max_memory_allocated(),
         'torch_peak_reserved_bytes': torch.cuda.max_memory_reserved(),
         'rss_process_lifetime_peak_bytes': resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024,
@@ -285,7 +293,8 @@ def main(experiment, power_backend='none'):
     guard.device_snapshot()
     
     tqdm.write('Loading detector and warming up...')
-    model = load_detector()
+    runtime_settings = inference_settings(freeze.get('inference', {'nms': 'custom'}))
+    model = load_detector(settings=runtime_settings)
 
     for _ in range(8):
         first_frame = source.image(source.frames(freeze['videos'][0])[0])
@@ -304,6 +313,11 @@ def main(experiment, power_backend='none'):
             'device': torch.cuda.get_device_name(0),
             'architecture': platform.machine(),
             'power_backend': power_backend,
+            'inference': runtime_settings,
+            'tf32_cudnn': torch.backends.cudnn.allow_tf32,
+            'tf32_matmul': torch.backends.cuda.matmul.allow_tf32,
+            'engine_metadata': getattr(model, 'metadata', None),
+            'memory_note': 'Torch allocator statistics exclude TensorRT internal allocations',
         })
 
     with tqdm(

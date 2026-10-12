@@ -1,13 +1,17 @@
-"""Installed Ultralytics YOLO backend and deterministic tensor-only box suppression.
+"""Ultralytics YOLO with explicit precision and NMS choices."""
 
-The suppression convention is frozen for numerical parity. Method and checkpoint
-license terms are retained in licenses/ULTRALYTICS-LICENSE.
-"""
-from ..project import bootstrap, ROOT
-bootstrap()
 import torch
+import torchvision.ops
+import torchvision.ops.boxes
 from ultralytics import YOLO
 from ultralytics.engine.results import Results
+
+from ..project import ROOT
+from .configuration import apply_precision, inference_settings
+
+
+NATIVE_NMS = torchvision.ops.nms
+
 
 def _overlap_with_selected(boxes, area, selected, candidates):
     edge = boxes[selected]
@@ -16,6 +20,7 @@ def _overlap_with_selected(boxes, area, selected, candidates):
     x_high = torch.clamp(boxes[candidates, 2], max=edge[2].item())
     y_high = torch.clamp(boxes[candidates, 3], max=edge[3].item())
     intersection = (x_high - x_low).clamp(min=0) * (y_high - y_low).clamp(min=0)
+
     return intersection / (area[selected] + area[candidates] - intersection + 1e-7)
 
 
@@ -24,23 +29,39 @@ def _pure_torch_nms(boxes, scores, iou_threshold):
     area = extent[:, 0] * extent[:, 1]
     candidates = scores.argsort(descending=True)
     selected = []
+
     while candidates.numel():
         winner = candidates[0].item()
         selected.append(winner)
         candidates = candidates[1:]
+
         if candidates.numel():
             overlap = _overlap_with_selected(boxes, area, winner, candidates)
             candidates = candidates[overlap <= iou_threshold]
+
     return torch.tensor(selected, dtype=torch.int64, device=boxes.device)
 
-# Preserve the measured pure-Torch NMS path across devices.
-try:
-    import torchvision
-    import torchvision.ops.boxes
-    torchvision.ops.nms = _pure_torch_nms
-    torchvision.ops.boxes.nms = _pure_torch_nms
-except ImportError:
-    pass
 
-def load_detector(device='cuda'):
-    return YOLO(str(ROOT/'models/yolo11x.pt')).to(device)
+def select_nms(implementation):
+    """Select suppression for the one detector runtime used by this process."""
+    if implementation not in ('native', 'custom'):
+        raise ValueError(f'Unknown NMS implementation: {implementation}')
+
+    function = NATIVE_NMS if implementation == 'native' else _pure_torch_nms
+    torchvision.ops.nms = function
+    torchvision.ops.boxes.nms = function
+
+
+def load_detector(device='cuda', settings=None):
+    settings = inference_settings(settings)
+    apply_precision(settings['precision'])
+    select_nms(settings['nms'])
+    model = YOLO(str(ROOT / settings['checkpoint'])).to(device)
+
+    if settings['backend'] == 'tensorrt':
+        # TensorRT remains optional for reviewers using the eager route.
+        from .tensorrt_runtime import TensorRTDetector
+
+        return TensorRTDetector(model, ROOT / settings['engine'], settings['precision'])
+
+    return model

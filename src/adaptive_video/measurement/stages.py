@@ -6,6 +6,7 @@ import random
 import yaml
 
 from ..evaluation.dataset import EvaluationDataset
+from ..detectors.configuration import inference_settings
 from ..project import ROOT, bootstrap, read, save
 from . import guard, power, power_check, runner
 from .clocks import locked_clocks
@@ -171,7 +172,8 @@ def prepare_full_protocol(out, dataset_manifest, repeats=None, config=None):
 
     save(out / 'manifests/dataset.json', selected_manifest)
     protocol = {
-        'schema_version': 2,
+        'schema_version': 3,
+        'inference': inference_settings(configuration.get('inference')),
         'population': 'selected_videos',
         'arms': variants,
         'videos': videos,

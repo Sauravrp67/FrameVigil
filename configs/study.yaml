@@ -25,3 +25,14 @@ experiment:
     - always_on
 
   repeats: 1
+
+# FP32 tensors in both modes. fp32 disables TF32 arithmetic; tf32 allows it.
+inference:
+  backend: tensorrt  # torch | tensorrt
+  precision: tf32   # fp32 | tf32
+  nms: native       # native | custom (previous Python implementation)
+  checkpoint: models/yolo11x.pt
+  # Optional engine path. Default: models/yolo11x_<precision>.engine
+  # Build on the measurement machine before running:
+  # python scripts/build_detector_engine.py --config configs/study.yaml
+  # Changing this file affects newly prepared experiments; prepare a new output folder.
