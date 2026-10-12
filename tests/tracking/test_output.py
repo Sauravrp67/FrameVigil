@@ -7,7 +7,8 @@ import pytest
 import torch
 
 from adaptive_video import dataset as common
-from adaptive_video.detectors.yolo import Results, _pure_torch_nms
+from ultralytics.engine.results import Results
+from adaptive_video.detectors.nms import _pure_torch_nms
 from adaptive_video.measurement.protocol import always_rows
 from adaptive_video.tracking.kalman import BoxTrack
 from adaptive_video.tracking.output import (

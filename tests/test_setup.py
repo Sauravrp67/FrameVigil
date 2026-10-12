@@ -197,7 +197,7 @@ def test_existing_torch_is_reused_without_a_version_whitelist(tmp_path):
     )
 
     assert result.returncode == 0, result.stdout + result.stderr
-    assert 'torch>=2.1' not in calls.read_text()
+    assert 'torch>=2.4' not in calls.read_text()
     assert 'Reusing installed PyTorch' in result.stdout
 
 
@@ -212,4 +212,4 @@ def test_missing_cuda_information_does_not_silently_install_cpu_torch(tmp_path):
 
     assert result.returncode != 0
     assert 'CUDA version could not be detected' in result.stderr
-    assert 'torch>=2.1' not in calls.read_text()
+    assert 'torch>=2.4' not in calls.read_text()

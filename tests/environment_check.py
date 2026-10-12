@@ -65,6 +65,7 @@ class EnvironmentTests(unittest.TestCase):
             'scipy.linalg',
             'pandas',
             'onnx',
+            'transformers.models.rt_detr_v2.modeling_rt_detr_v2',
             'sklearn',
             'pycocotools.mask',
             'trackeval',
@@ -118,7 +119,7 @@ class EnvironmentTests(unittest.TestCase):
         import torch
         import torchvision
 
-        self.assertGreaterEqual(Version(torch.__version__), Version('2.1'))
+        self.assertGreaterEqual(Version(torch.__version__), Version('2.4'))
         self.assertGreaterEqual(Version(torchvision.__version__), Version('0.16'))
 
         device = os.environ.get('FRAMEVIGIL_DEVICE', 'auto')

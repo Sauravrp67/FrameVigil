@@ -1,4 +1,4 @@
-"""TensorRT forward execution with the existing Ultralytics image pipeline."""
+"""Model-independent TensorRT loading, binding and execution."""
 
 import json
 from pathlib import Path
@@ -75,8 +75,8 @@ class TensorRTForward:
                 if not self.context.set_tensor_address(name, output.data_ptr()):
                     raise RuntimeError(f'Cannot bind TensorRT output: {name}')
 
-        if set(self.outputs) != {'decoded', 'head0', 'head1', 'head2'}:
-            raise ValueError('Engine must contain decoded predictions and three YOLO head outputs')
+        if not self.outputs:
+            raise ValueError('Engine has no output tensors')
 
     def __call__(self, inputs, *args, **kwargs):
         if tuple(inputs.shape) != self.input_shape or inputs.dtype != torch.float32:
@@ -96,30 +96,4 @@ class TensorRTForward:
         if not self.context.execute_async_v3(stream.cuda_stream):
             raise RuntimeError('TensorRT inference failed')
 
-        return self.outputs['decoded'], [self.outputs[f'head{index}'] for index in range(3)]
-
-
-class TensorRTDetector:
-    """Replace forward only, retaining the tested preprocessing/NMS/Results path.
-
-    The eager model remains resident for Ultralytics metadata and setup. This
-    adapter is a latency implementation, not a reduced-memory deployment runtime.
-    """
-
-    def __init__(self, model, engine, precision):
-        require_tensorrt()
-        self.metadata = read_engine_metadata(engine, precision)
-        self.model = model
-        self.engine = Path(engine)
-        self.forward = None
-
-    @torch.inference_mode()
-    def predict(self, frame, **kwargs):
-        if self.forward is None:
-            # Called during the runner's untimed warmup, never built during a trial.
-            self.model.predict(frame, **kwargs)
-            inputs = self.model.predictor.preprocess([frame])
-            self.forward = TensorRTForward(self.engine, inputs)
-            self.model.predictor.inference = self.forward
-
-        return self.model.predict(frame, **kwargs)
+        return self.outputs

@@ -96,7 +96,7 @@ def collect_video(source, video, tracker, model, backend, device='cuda', synchro
 def collect(dataset_manifest, output):
     """Generate a new diagnostic capture using hardware flow, one file per complete video."""
     from ..measurement.support import configure
-    from ..detectors.yolo import load_detector
+    from ..detectors.factory import load_detector
     from .flow_backend import HardwareFlow
 
 

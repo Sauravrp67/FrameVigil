@@ -6,6 +6,7 @@ import os
 os.environ.setdefault('CUBLAS_WORKSPACE_CONFIG', ':4096:8')
 
 import platform
+from importlib.metadata import version
 import resource
 import sys
 import time
@@ -15,10 +16,11 @@ import cv2
 import numpy as np
 import torch
 from tqdm import tqdm
+from ultralytics import __version__ as ultralytics_version
 from packaging.version import Version
 
 from .. import dataset as common
-from ..detectors.yolo import load_detector
+from ..detectors.factory import load_detector
 from ..detectors.configuration import inference_settings
 from pathlib import Path
 
@@ -307,6 +309,8 @@ def main(experiment, power_backend='none'):
             'time': common.now(),
             'python': sys.version,
             'torch': torch.__version__,
+            'ultralytics': ultralytics_version,
+            'transformers': version('transformers') if runtime_settings.get('model') == 'rtdetrv2' else None,
             'numpy': np.__version__,
             'opencv': cv2.__version__,
             'promotion': getattr(np, '_get_promotion_state', lambda: 'not exposed')(),

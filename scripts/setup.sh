@@ -123,7 +123,7 @@ trap 'rm -rf -- "$TEMPORARY_DIRECTORY"' EXIT
 CONSTRAINTS="$TEMPORARY_DIRECTORY/installed-stack.txt"
 touch "$CONSTRAINTS"
 
-if package_at_least torch 2.1 && package_at_least torchvision 0.16; then
+if package_at_least torch 2.4 && package_at_least torchvision 0.16; then
     echo 'Reusing installed PyTorch and torchvision; functional tests run below.'
 else
     if [[ -z "$TORCH_INDEX_URL" ]]; then
@@ -158,7 +158,7 @@ else
     # Fetch the platform wheels separately so their dependency links cannot send
     # NCCL and other general packages back to the slow default file server.
     TORCH_WHEEL_DIRECTORY="$TEMPORARY_DIRECTORY/torch-wheels"
-    "$PYTHON" -m pip download --no-deps --only-binary=:all: 'torch>=2.1' 'torchvision>=0.16' \
+    "$PYTHON" -m pip download --no-deps --only-binary=:all: 'torch>=2.4' 'torchvision>=0.16' \
         --index-url "$TORCH_INDEX_URL" --dest "$TORCH_WHEEL_DIRECTORY" \
         || fail 'PyTorch wheel download failed; no CPU fallback was installed.'
 

@@ -1,27 +1,16 @@
-"""Export a YOLO forward graph and build a device-local FP32 TensorRT engine."""
+"""Export a detector forward graph and build a device-local FP32 TensorRT engine."""
 
 import json
-from pathlib import Path
+from importlib.metadata import version
 import time
 
 import torch
-from ultralytics import YOLO
+from ultralytics import __version__ as ultralytics_version
 
 from ..project import ROOT
 from .configuration import apply_precision, inference_settings
 from .tensorrt_runtime import require_tensorrt
-
-
-class ForwardOutputs(torch.nn.Module):
-    """Keep the decoded prediction and all three heads, matching eager inference."""
-
-    def __init__(self, model):
-        super().__init__()
-        self.model = model
-
-    def forward(self, inputs):
-        decoded, heads = self.model(inputs)
-        return decoded, heads[0], heads[1], heads[2]
+from .factory import prepare_export
 
 
 @torch.inference_mode()
@@ -44,13 +33,11 @@ def build_engine(configuration, device='cuda'):
     destination.parent.mkdir(parents=True, exist_ok=True)
     torch.set_num_threads(1)
     apply_precision('fp32')
-    model = YOLO(str(ROOT / settings['checkpoint'])).model.to(device).float().eval()
-    model.fuse(verbose=False)
-    inputs = torch.zeros((1, 3, 736, 1280), device=device, dtype=torch.float32)
-    exported = ForwardOutputs(model).eval()
+    exported, inputs, output_names, prediction_format = prepare_export(settings, device)
+
     exported(inputs)
 
-    print('Exporting FP32 YOLO forward graph...', flush=True)
+    print('Exporting FP32 detector forward graph...', flush=True)
     torch.onnx.export(
         exported,
         inputs,
@@ -58,7 +45,7 @@ def build_engine(configuration, device='cuda'):
         opset_version=17,
         dynamo=False,
         input_names=['images'],
-        output_names=['decoded', 'head0', 'head1', 'head2'],
+        output_names=output_names,
         do_constant_folding=True,
     )
     onnx.checker.check_model(str(onnx_path))
@@ -102,7 +89,12 @@ def build_engine(configuration, device='cuda'):
         'gpu': torch.cuda.get_device_name(inputs.device),
         'torch': torch.__version__,
         'build_seconds': time.perf_counter() - started,
-        'outputs': ['decoded', 'head0', 'head1', 'head2'],
+        'outputs': output_names,
+        'ultralytics': ultralytics_version,
+        'prediction_format': prediction_format,
+        'max_det': 300,
+        'detector': settings.get('model', 'yolo'),
+        'transformers': version('transformers') if settings.get('model') == 'rtdetrv2' else None,
     }
     metadata_path.write_text(json.dumps(metadata, indent=2) + '\n')
     print('Saved engine:', destination)
