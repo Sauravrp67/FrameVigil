@@ -1,4 +1,5 @@
-"""Run a prepared CUDA GPU campaign with optional validated module-power telemetry."""
+"""Run a prepared GPU campaign with optional clock locking and power telemetry."""
+
 import argparse
 from _checkout import add_source_directory
 
@@ -16,8 +17,13 @@ def main():
         default='none',
         help='Energy backend; vdd_in requires a passing power-validation run',
     )
+    parser.add_argument(
+        '--lock-clocks',
+        action='store_true',
+        help='Lock clocks using Jetson utilities or nvidia-smi; clean up on exit',
+    )
     args = parser.parse_args()
-    measure(args.experiment, power_backend=args.power)
+    measure(args.experiment, power_backend=args.power, lock_clocks=args.lock_clocks)
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ import yaml
 from ..evaluation.dataset import EvaluationDataset
 from ..project import ROOT, bootstrap, read, save
 from . import guard, power, power_check, runner
+from .clocks import locked_clocks
 from .isolated import IsolatedPower
 from ..variants.registry import VARIANTS
 
@@ -65,10 +66,17 @@ def validate_power(experiment):
         raise RuntimeError('Telemetry validation failed')
 
 
-def measure(experiment, power_backend='none'):
+def measure(experiment, power_backend='none', lock_clocks=False):
     """Select the prepared dataset and launch the live trial runner."""
     directory = checked_experiment(experiment)
-    runner.main(directory, power_backend=power_backend)
+
+    if lock_clocks:
+        guard.check_competing_benchmark()
+
+        with locked_clocks(directory / 'results'):
+            runner.main(directory, power_backend=power_backend)
+    else:
+        runner.main(directory, power_backend=power_backend)
 
 
 def select_videos(videos, selection):
