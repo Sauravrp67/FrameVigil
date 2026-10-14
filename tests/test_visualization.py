@@ -14,7 +14,7 @@ from adaptive_video.experiments import figures, render
 
 def write_table(path, energy=False):
     header = 'variant,AP50_95_percent,unique_frames,latency_ms_per_frame'
-    values = ['constant_acceleration,32,39973,10', 'raw_both,34,39973,11']
+    values = ['constant_acceleration,32,39973,10', 'visibility_ca10,34,39973,11']
 
     if energy:
         header += ',module_joules_per_frame'
@@ -28,7 +28,7 @@ def test_plots_only_available_diagnostics(tmp_path, energy):
     source = tmp_path / 'summary.csv'
     write_table(source, energy)
     (tmp_path / 'localization.csv').write_text(
-        'variant,iou,AP_percent\nconstant_acceleration,0.5,40\nraw_both,0.5,42\n'
+        'variant,iou,AP_percent\nconstant_acceleration,0.5,40\nvisibility_ca10,0.5,42\n'
     )
     output = tmp_path / 'figures'
     paths = figures.run(source, output)
@@ -92,7 +92,7 @@ def prediction_fixture(tmp_path, monkeypatch):
     )
     paths = []
 
-    for variant in ['constant_acceleration', 'raw_both']:
+    for variant in ['constant_acceleration', 'visibility_ca10']:
         path = tmp_path / f'{variant}.json.gz'
         detection = dict(
             box_xyxy=[10, 10, 50, 50], class_id=2, conf=0.2, track_id='object-7'

@@ -99,9 +99,7 @@ def emit(detector, variant='constant_acceleration'):
     """Publish track outputs"""
     choices = {
         'constant_acceleration': (False, False),
-        'raw_boxes': (True, False),
-        'raw_scores': (False, True),
-        'raw_both': (True, True),
+        'detector_observations': (True, True),
     }
 
     if variant not in choices:

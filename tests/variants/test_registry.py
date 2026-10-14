@@ -70,7 +70,6 @@ def test_output_parity_rejects_box_class_and_confidence_drift():
 def test_registry_contains_expected_variants_and_output_modes():
     assert set(VARIANTS) == {
         'constant_acceleration',
-        'raw_both',
         'cv8',
         'damped_ca10',
         'log_cv8',
@@ -81,4 +80,5 @@ def test_registry_contains_expected_variants_and_output_modes():
         'visibility_ca10',
     }
     assert VARIANTS['constant_acceleration'] == (AdaptiveDetectionTracker, BoxTrack, 'constant_acceleration')
-    assert VARIANTS['raw_both'] == (DetectorOutputTracker, BoxTrack, 'raw_both')
+    assert all(mode == 'detector_observations' for name, (_, _, mode) in VARIANTS.items()
+               if name != 'constant_acceleration')

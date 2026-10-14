@@ -41,7 +41,7 @@ def inventory(tmp_path):
 
 def test_selected_variants_videos_and_evaluation_population(tmp_path, inventory):
     config = tmp_path / 'study.yaml'
-    variants = ['constant_acceleration', 'raw_both', 'cv8']
+    variants = ['constant_acceleration', 'visibility_ca10', 'cv8']
     config.write_text(yaml.safe_dump({
         'dataset': {'sequence': {'start': 0, 'end': 30}},
         'experiment': {'variants': variants, 'repeats': 2},

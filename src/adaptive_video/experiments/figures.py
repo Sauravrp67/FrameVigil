@@ -15,6 +15,7 @@ from ..project import ROOT
 COST_AXES = {
     'latency_ms_per_frame': 'Pipeline latency (ms/frame)',
     'module_joules_per_frame': 'Module-input energy (J/frame)',
+    'module_edp_j_ms': 'Energy–delay product (J·ms)',
 }
 
 
@@ -85,7 +86,7 @@ def run(source, output):
 
 
 LABELS = {
-    'baseline': 'Baseline', 'constant_acceleration': 'Constant acceleration', 'raw_both': 'Raw boxes + scores',
+    'baseline': 'Baseline', 'constant_acceleration': 'Constant acceleration',
     'cv8': 'Constant velocity', 'damped_ca10': 'Damped acceleration',
     'log_cv8': 'Log size', 'aspect_cv8': 'Aspect ratio',
     'projective_restart_cv8': 'Projective restart', 'camera_ca10': 'Camera motion',
@@ -133,6 +134,46 @@ def color_map(variants):
     return {variant: palette(index) for index, variant in enumerate(variants)}
 
 
+def edp_plot(table, output, colors, metric="AP50_95_percent"):
+    """Plot one operating point per variant with an available metric."""
+    metrics = {
+        'AP50_95_percent': ('Pooled AP50:95', 'accuracy_edp'),
+        'AP50_percent': ('Pooled AP50', 'accuracy_edp_ap50'),
+        'HOTA_percent': ('HOTA', 'hota_edp'),
+        'IDF1_percent': ('IDF1', 'idf1_edp'),
+        'MOTA_percent': ('MOTA', 'mota_edp'),
+    }
+    label, filename = metrics[metric]
+    tracking = metric in ('HOTA_percent', 'IDF1_percent', 'MOTA_percent')
+
+    if tracking:
+        table = [row for row in table if row['variant'] != 'baseline'
+                 and np.isfinite(number(row, metric))
+                 and np.isfinite(number(row, 'module_edp_j_ms'))]
+
+    if not any(np.isfinite(number(row, 'module_edp_j_ms')) for row in table):
+        return []
+
+    if not all(np.isfinite(number(row, metric)) for row in table):
+        return []
+
+    figure, axes = create_figure(width=10, height=6)
+    axis = axes[0, 0]
+
+    for row in table:
+        variant = row['variant']
+        axis.scatter(number(row, 'module_edp_j_ms'), number(row, metric),
+                     color=colors[variant], marker='*' if variant == 'baseline' else 'o',
+                     s=180 if variant == 'baseline' else 65, edgecolors='black',
+                     linewidths=0.5, label=LABELS.get(variant, variant))
+
+    axis.set_xlabel('Energy–delay product (J·ms)')
+    axis.set_ylabel(f'{label} (%)')
+    axis.grid(alpha=0.2)
+    axis.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), frameon=False)
+    return save_figure(figure, output, filename)
+
+
 def localization_plot(table, output, colors):
     figure, axes = create_figure(width=10, height=6)
     axis = axes[0, 0]
@@ -151,47 +192,23 @@ def localization_plot(table, output, colors):
     return save_figure(figure, output, 'localization')
 
 
-def per_video_plots(table, output, colors):
+def skipping_plot(table, output):
     baseline = {row['video']: row for row in table if row['variant'] == 'baseline'}
 
-    if not baseline:
+    if not baseline or not any(row['variant'] != 'baseline' for row in table):
         return []
 
-    videos = sorted(baseline)
-    variants = [variant for variant in colors if variant != 'baseline']
-    if not variants:
-        return []
-
-    lookup = {(row['variant'], row['video']): row for row in table}
-    fields = [('AP50_95_percent', 'AP50:95 change (percentage points)'),
-              ('latency_ms_per_frame', 'Latency reduction (%)'),
+    fields = [('latency_ms_per_frame', 'Latency reduction (%)'),
               ('module_joules_per_frame', 'Energy reduction (%)')]
     fields = [(field, title) for field, title in fields
               if any(np.isfinite(number(row, field)) for row in table)]
-    figure, axes = create_figure(columns=len(fields), width=6 * len(fields), height=6)
+
+    if not fields:
+        return []
+
+    figure, axes = create_figure(columns=len(fields), width=6.5 * len(fields), height=5)
 
     for axis, (field, title) in zip(axes[0], fields):
-        values = np.full((len(variants), len(videos)), np.nan)
-
-        for i, variant in enumerate(variants):
-            for j, video in enumerate(videos):
-                reference = number(baseline[video], field)
-                measured = number(lookup[variant, video], field)
-                values[i, j] = measured - reference if field.startswith('AP') else 100 * (1 - measured / reference)
-
-        finite = np.abs(values[np.isfinite(values)])
-        limit = max(float(finite.max()), 0.01) if finite.size else 1
-        heatmap = axis.imshow(values, aspect='auto', cmap='RdBu', vmin=-limit, vmax=limit)
-        axis.set_xticks(range(len(videos)), [f'V{i + 1}' for i in range(len(videos))], rotation=90)
-        axis.set_yticks(range(len(variants)), [LABELS[v] for v in variants])
-        axis.set_title(title)
-        figure.colorbar(heatmap, ax=axis, shrink=0.8)
-
-    paths = save_figure(figure, output, 'per_video_effects')
-    (output / 'video_keys.txt').write_text('\n'.join(f'V{i + 1}: {v}' for i, v in enumerate(videos)) + '\n')
-    figure, axes = create_figure(columns=len(fields) - 1, width=6.5 * (len(fields) - 1), height=5)
-
-    for axis, (field, title) in zip(axes[0], fields[1:]):
         xs, ys, gains = [], [], []
 
         for row in table:
@@ -213,8 +230,7 @@ def per_video_plots(table, output, colors):
         axis.grid(alpha=0.2)
         figure.colorbar(points, ax=axis, label='AP50:95 change (pp)')
 
-    figure.suptitle('Each point is one variant on one video; paired with baseline detector')
-    return paths + save_figure(figure, output, 'skipping_value')
+    return save_figure(figure, output, 'skipping_value')
 
 
 def timing_plots(table, output):
@@ -253,7 +269,7 @@ def timing_plots(table, output):
 
 def timeline_plots(frames, videos, output):
     paths = []
-    variants = ('baseline', 'constant_acceleration', 'raw_both', 'cv8')
+    variants = ('baseline', 'constant_acceleration', 'visibility_ca10', 'cv8')
     states = ['empty_skip', 'prediction_only', 'erd_detection', 'detection', 'rescue_detection']
 
     for video in videos:
@@ -292,7 +308,7 @@ def timeline_plots(frames, videos, output):
 
 
 def power_profiles(table):
-    """Normalize repeat 1 by elapsed time; every paired clip has equal weight."""
+    """Normalize repeat 1 by elapsed time."""
     traces = {}
 
     for row in table:
@@ -362,10 +378,8 @@ def power_plots(table, output):
 
     handles, labels = axes[0].get_legend_handles_labels()
     axes[len(variants)].legend(handles, labels, loc='center', frameon=False, fontsize=10)
-    figure.supxlabel('Elapsed execution time (% of each run)\n'
-                       'Equal clip weights; normalized time does not align video frames.', fontsize=11)
+    figure.supxlabel('Elapsed execution time (% of each run)', fontsize=11)
     figure.supylabel('Module-input power (W)')
-    figure.suptitle(f'{len(videos)} paired clips | repeat 1 | median and 25–75% across clips', fontsize=14)
     return save_figure(figure, output, 'power_aggregate')
 
 
@@ -374,7 +388,9 @@ def plot_diagnostics(summary_path, output):
     directory = Path(summary_path).parent
     summary = read_table(summary_path)
     colors = color_map([row['variant'] for row in summary])
-    paths = []
+    paths = edp_plot(summary, output, colors)
+    for metric in ("AP50_percent", "HOTA_percent", "IDF1_percent", "MOTA_percent"):
+        paths.extend(edp_plot(summary, output, colors, metric=metric))
 
     if (directory / 'localization.csv').exists():
         table = read_table(directory / 'localization.csv')
@@ -388,7 +404,7 @@ def plot_diagnostics(summary_path, output):
         return paths
 
     videos = read_table(directory / 'per_video.csv')
-    paths.extend(per_video_plots(videos, output, colors))
+    paths.extend(skipping_plot(videos, output))
 
     # Use low, middle and high skip rates for the example traces.
     reference = [row for row in videos if row['variant'] == 'constant_acceleration']

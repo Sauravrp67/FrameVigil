@@ -12,7 +12,7 @@ from .figures import create_figure, read_table, save_figure, LABELS
 
 
 def select_cases(rows, variant):
-    """Select minimum, median and maximum error reduction, without manual curation."""
+    """Select minimum, median and maximum error reduction."""
     reference = {row['image_id']: row for row in rows if row['variant'] == 'baseline'}
     candidates = []
 
@@ -56,7 +56,7 @@ def run(experiment, summary_directory, output):
     source = EvaluationDataset(experiment / protocol['dataset_manifest'])
     frames_table = read_table(Path(summary_directory) / 'frames.csv')
     variants = {row['variant'] for row in frames_table}
-    target = next((name for name in ('raw_both', 'cv8', 'constant_acceleration') if name in variants), None)
+    target = next((name for name in ('visibility_ca10', 'cv8', 'constant_acceleration') if name in variants), None)
 
     if target is None or 'baseline' not in variants:
         return []

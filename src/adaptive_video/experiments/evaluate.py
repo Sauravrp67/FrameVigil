@@ -8,14 +8,14 @@ from pathlib import Path
 from .. import dataset
 from ..evaluation.dataset import EvaluationDataset
 from ..evaluation.coco import coco, ground_truth, predrows, localization_curve, frame_errors
-from .statistics import timing_summary, frame_rows, power_rows, write_report_tables
+from .statistics import energy_delay_product, timing_summary, frame_rows, power_rows, write_report_tables
 from ..evaluation.mot import METRIC_NAMES, mot
 from ..measurement.power import integrate
 from ..project import ROOT, read, save
 
 
 class TrialRecords:
-    """Read one video trial at a time instead of retaining an entire campaign."""
+    """Read one video trial at a time."""
 
     def __init__(self, paths):
         self.paths = paths
@@ -29,7 +29,7 @@ class TrialRecords:
 
 
 def load_results(folder, live):
-    """Group saved trial outputs by variant; reject duplicate live trials."""
+    """Group saved trial outputs by variant."""
 
     paths = (
         (folder / 'results/live').glob('*.json.gz')
@@ -61,7 +61,7 @@ def load_results(folder, live):
 
 
 def validate_schedule(groups, protocol):
-    """Require all scheduled variants and trials, with no extra results."""
+    """Require all scheduled variants and trials."""
 
     if set(groups) != set(protocol['arms']):
         raise ValueError('Results do not match the scheduled variants')
@@ -117,11 +117,7 @@ def collect_predictions(records, live, source):
 
 
 def summarize_resources(folder, records):
-    """Aggregate complete workload intervals, including detector-skipped frames.
-
-    Power integration consistency does not independently validate the sensor.
-    Telemetry validation must precede trials that request energy measurement.
-    """
+    """Aggregate complete workload intervals, including detector-skipped frames."""
 
     total_frames = 0
     total_seconds = 0.0
@@ -178,13 +174,16 @@ def summarize_resources(folder, records):
             total_joules += energy
         detector_calls += calls
 
+    mean_latency = 1000 * total_seconds / total_frames
+    mean_energy = total_joules / total_frames if energy_available else None
     skipped_frames = total_frames - detector_calls
     
     return {
         'measured_frames': total_frames,
         'trials': len(records),
-        'latency_ms_per_frame': 1000 * total_seconds / total_frames,
-        'module_joules_per_frame': total_joules / total_frames if energy_available else None,
+        'latency_ms_per_frame': mean_latency,
+        'module_joules_per_frame': mean_energy,
+        'module_edp_j_ms': energy_delay_product(mean_energy, mean_latency),
         'module_average_W': total_joules / total_seconds if energy_available else None,
         'detector_calls': detector_calls,
         'skipped_frames': skipped_frames,
@@ -358,6 +357,7 @@ def run(folder, output, live=False, dataset_manifest=None):
             'videos': len(expected_videos),
             'repeats': protocol['repeats'],
             'accuracy': 'Pooled COCO AP; repeat 0 only; maxDets=300. Per-video AP is diagnostic.',
+            'edp': 'Product of total module joules / measured frames and total wall milliseconds / measured frames; J ms. Includes skipped frames and all repeats.',
             'timing': 'Controller/output includes emission. Other is measured wall time minus components.',
             'frame_errors': 'COCO TP/FP/FN at IoU 0.75, all sizes, original scores, maxDets=300.',
             'power': 'Module VDD_IN; interpolated workload boundaries; cumulative energy uses wall time.',

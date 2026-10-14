@@ -6,10 +6,15 @@ name = "adaptive-video-inference"
 version = "0.3.0"
 description = "Reproducible output-fidelity and adaptive video inference experiments"
 requires-python = ">=3.10"
+license = {file = "LICENSE"}
+authors = [{name = "Saurav Raj Paudel"}]
 dependencies = ["numpy>=1.26", "scipy>=1.11", "pycocotools==2.0.10", "PyYAML>=6"]
 [project.optional-dependencies]
 test = ["pytest>=8,<9"]
 vision = ["transformers==5.5.4", "ultralytics==8.4.215", "torch>=2.4", "torchvision>=0.16", "opencv-python>=4.8", "matplotlib>=3.7", "pillow>=9", "PyYAML>=6", "requests>=2.23", "tqdm>=4.64", "psutil>=5.9", "py-cpuinfo", "pandas>=1.1", "seaborn>=0.11", "ultralytics-thop>=2"]
+[tool.setuptools]
+license-files = ["LICENSE", "NOTICE.md", "licenses/*"]
+
 [tool.setuptools.packages.find]
 where = ["src"]
 [tool.pytest.ini_options]

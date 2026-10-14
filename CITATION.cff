@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use FrameVigil in your research, please cite this software and identify the version or commit used."
+type: software
+title: "FrameVigil: Accuracy, latency and energy trade-offs in video object detection"
+authors:
+  - family-names: Paudel
+    given-names: Saurav Raj
+    alias: Sauravrp67
+    website: "https://github.com/Sauravrp67"
+repository-code: "https://github.com/Sauravrp67/FrameVigil"
+url: "https://github.com/Sauravrp67/FrameVigil"
+license: AGPL-3.0-only
+date-released: "2026-11-18"

@@ -75,18 +75,18 @@ def test_cases_include_harm_and_benefit_without_manual_selection():
     rows = []
 
     for index, errors in enumerate([0, 2, 4]):
-        for variant, count in [('baseline', 2), ('raw_both', errors)]:
+        for variant, count in [('baseline', 2), ('visibility_ca10', errors)]:
             rows.append({'variant': variant, 'image_id': str(index), 'frame_index': str(index),
                          'video': 'clip', 'FP75': str(count), 'FN75': '0'})
 
-    cases = select_cases(rows, 'raw_both')
+    cases = select_cases(rows, 'visibility_ca10')
 
     assert [case['error_reduction'] for case in cases] == [-2, 0, 2]
     assert [case['frame_index'] for case in cases] == [2, 1, 0]
 
 
-def test_heatmap_and_skip_plot_allow_no_energy(tmp_path):
-    from adaptive_video.experiments.figures import per_video_plots, color_map
+def test_skip_plot_allows_no_energy(tmp_path):
+    from adaptive_video.experiments.figures import skipping_plot
 
     rows = [
         {'variant': variant, 'video': 'clip', 'AP50_95_percent': '30',
@@ -94,11 +94,13 @@ def test_heatmap_and_skip_plot_allow_no_energy(tmp_path):
          'skipped_frames_percent': skipped}
         for variant, latency, skipped in [('baseline', '100', '0'), ('constant_acceleration', '70', '30')]
     ]
-    paths = per_video_plots(rows, tmp_path, color_map(['baseline', 'constant_acceleration']))
+    paths = skipping_plot(rows, tmp_path)
 
-    assert len(paths) == 4
+    assert len(paths) == 2
     assert all(path.stat().st_size > 0 for path in paths)
-    assert 'Energy reduction' not in (tmp_path / 'per_video_effects.svg').read_text()
+    assert 'Energy reduction' not in (tmp_path / 'skipping_value.svg').read_text()
+    assert not (tmp_path / 'per_video_effects.svg').exists()
+    assert not (tmp_path / 'video_keys.txt').exists()
 
 
 def test_csv_comparisons_use_p95_and_preserve_missing_metrics(tmp_path):
@@ -125,7 +127,9 @@ def test_csv_comparisons_use_p95_and_preserve_missing_metrics(tmp_path):
     with (tmp_path / 'tracking.csv').open() as stream:
         tracking = list(csv.DictReader(stream))
 
-    assert len(accuracy[0]) == 4
+    assert len(accuracy[0]) == 6
+    assert float(accuracy[1]['module_edp_j_ms']) == pytest.approx(96)
+    assert float(power[1]['edp_reduction_percent']) == pytest.approx(52)
     assert float(accuracy[1]['frame_latency_p95_ms']) == 130
     assert float(power[0]['energy_reduction_percent']) == 0
     assert float(power[1]['power_reduction_percent']) == 25
@@ -138,7 +142,7 @@ def test_aggregate_power_grids_weight_clips_equally(tmp_path):
 
     traces = []
 
-    for variant in ('baseline', 'constant_acceleration', 'raw_both'):
+    for variant in ('baseline', 'constant_acceleration', 'visibility_ca10'):
         for video, duration, watts in [('short', 2, 10), ('long', 20, 30)]:
             for elapsed in (0, duration):
                 traces.append(dict(video=video, variant=variant, repeat=0, elapsed_s=elapsed,
@@ -160,7 +164,47 @@ def test_aggregate_power_grids_weight_clips_equally(tmp_path):
     for filename in ('power_aggregate.svg',):
         svg = (tmp_path / filename).read_text()
         assert 'Constant acceleration' in svg
-        assert 'Raw boxes + scores' in svg
+        assert 'Visibility' in svg
         assert 'Baseline' in svg
-        assert '2 paired clips' in svg
-        assert 'median' in svg
+        assert 'paired clips' not in svg
+        assert 'Equal clip weights' not in svg
+
+
+def test_edp_plot_and_missing_energy(tmp_path):
+    from adaptive_video.experiments.figures import edp_plot, color_map
+    from adaptive_video.experiments.statistics import energy_delay_product
+
+    assert energy_delay_product(None, 100) is None
+    rows = [dict(variant='baseline', module_edp_j_ms=200, AP50_95_percent=30),
+            dict(variant='cv8', module_edp_j_ms=96, AP50_95_percent=28)]
+    paths = edp_plot(rows, tmp_path, color_map(['baseline', 'cv8']))
+    assert len(paths) == 2
+    assert all(path.stat().st_size > 0 for path in paths)
+    assert edp_plot([dict(variant='baseline')], tmp_path, {}) == []
+
+
+def test_ap50_edp_plot_uses_ap50(tmp_path):
+    from adaptive_video.experiments.figures import edp_plot, color_map
+
+    rows = [dict(variant='baseline', module_edp_j_ms=200, AP50_percent=40)]
+    paths = edp_plot(rows, tmp_path, color_map(['baseline']), metric='AP50_percent')
+    assert len(paths) == 2
+    assert 'Pooled AP50 (%)' in (tmp_path / 'accuracy_edp_ap50.svg').read_text()
+    assert not (tmp_path / 'accuracy_edp.svg').exists()
+
+
+@pytest.mark.parametrize('metric,filename', [
+    ('HOTA_percent', 'hota_edp'), ('IDF1_percent', 'idf1_edp'), ('MOTA_percent', 'mota_edp')])
+def test_tracking_edp_omits_baseline_and_missing_scores(tmp_path, metric, filename):
+    from adaptive_video.experiments.figures import edp_plot, color_map
+
+    rows = [dict(variant='baseline', module_edp_j_ms=200),
+            dict(variant='cv8', module_edp_j_ms=100, **{metric: -5}),
+            dict(variant='visibility_ca10', module_edp_j_ms=90, **{metric: ''})]
+    paths = edp_plot(rows, tmp_path, color_map([row['variant'] for row in rows]), metric)
+    assert len(paths) == 2
+    svg = (tmp_path / f'{filename}.svg').read_text()
+    assert 'Constant velocity' in svg
+    assert 'Baseline' not in svg
+    assert 'Visibility' not in svg
+    assert edp_plot(rows[:1], tmp_path, {}, metric) == []

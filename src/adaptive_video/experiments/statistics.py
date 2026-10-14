@@ -10,6 +10,14 @@ from ..project import read
 STATES = ('empty_skip', 'prediction_only', 'erd_detection', 'detection', 'rescue_detection')
 
 
+def energy_delay_product(joules_per_frame, mean_latency_ms):
+    """Product of frame-weighted mean energy and latency, in J ms."""
+    if joules_per_frame in (None, '') or mean_latency_ms in (None, ''):
+        return None
+
+    return float(joules_per_frame) * float(mean_latency_ms)
+
+
 def frame_state(action):
     if not action['ran_inference']:
         return 'empty_skip' if action['ran_erd'] and action['erd_result'] == 'empty' else 'prediction_only'
@@ -68,11 +76,7 @@ def frame_rows(record, frames, errors):
 
 
 def power_rows(folder, record):
-    """Clip module-power traces to the exact measured interval and integrate them.
-
-    Frame timestamps were not saved. These traces use elapsed wall time only.
-    Auxiliary channels are not assigned rail names without recorded labels.
-    """
+    """Clip module-power traces to the exact measured interval and integrate them."""
     if record['energy_joules'] is None:
         return []
 
@@ -101,7 +105,10 @@ def power_rows(folder, record):
 
 
 def write_report_tables(summary, timing, output):
-    """Save numerical comparison tables; positive reductions mean savings."""
+    """Save numerical comparison tables"""
+    summary = [dict(row, module_edp_j_ms=energy_delay_product(
+        row.get('module_joules_per_frame'), row.get('latency_ms_per_frame')
+    )) for row in summary]
     timing_by_variant = {row['variant']: row for row in timing}
     baseline = next((row for row in summary if row['variant'] == 'baseline'), {})
     accuracy = []
@@ -127,6 +134,8 @@ def write_report_tables(summary, timing, output):
         accuracy.append({
             'variant': variant,
             'AP50_95_percent': value(row, 'AP50_95_percent'),
+            'module_edp_j_ms': value(row, 'module_edp_j_ms'),
+            'latency_ms_per_frame': value(row, 'latency_ms_per_frame'),
             'frame_latency_p95_ms': value(frame_timing, 'frame_latency_p95_ms'),
             'module_joules_per_frame': value(row, 'module_joules_per_frame'),
         })
@@ -142,6 +151,8 @@ def write_report_tables(summary, timing, output):
             'power_reduction_percent': reduction(row, 'module_average_W'),
             'module_joules_per_frame': value(row, 'module_joules_per_frame'),
             'energy_reduction_percent': reduction(row, 'module_joules_per_frame'),
+            'module_edp_j_ms': value(row, 'module_edp_j_ms'),
+            'edp_reduction_percent': reduction(row, 'module_edp_j_ms'),
         })
 
     csvwrite(output / 'accuracy_cost.csv', accuracy)

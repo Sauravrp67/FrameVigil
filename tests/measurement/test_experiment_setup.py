@@ -40,7 +40,7 @@ def test_experiment_configuration_is_not_hash_enforced(tmp_path, monkeypatch):
     assert not (tmp_path / 'manifests').exists()
     protocol = project.read(output / 'manifests/freeze.json')
 
-    assert len(protocol['schedule']) == 2200
+    assert len(protocol['schedule']) == 2000
     assert len(protocol['videos']) == 200
     assert not (output / 'runtime_sha256.json').exists()
     assert not (output / 'models_sha256.json').exists()

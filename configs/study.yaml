@@ -15,7 +15,6 @@ experiment:
   # Choose any registered variants. baseline runs the detector on every frame.
   variants:
     - constant_acceleration
-    - raw_both
     - cv8
     - damped_ca10
     - log_cv8

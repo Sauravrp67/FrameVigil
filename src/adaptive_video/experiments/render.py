@@ -19,7 +19,7 @@ HEADER_HEIGHT = 90
 
 
 def track_color(identity):
-    """Give an actual track ID a stable color, including string-valued IDs."""
+    """Give an actual track ID a stable colors."""
     digest = hashlib.sha256(str(identity).encode()).digest()
     hue = int.from_bytes(digest[:4], 'big') / 2**32
     red, green, blue = colorsys.hsv_to_rgb(hue, 0.7, 1.0)
@@ -36,7 +36,7 @@ def draw_text(image, message, position, color=(240, 240, 240)):
 
 
 def load_predictions(paths, video, frame_count):
-    """Load complete trial files for one sequence, with one file per variant."""
+    """Load complete trial files for one sequence."""
     records = []
     variants = set()
 

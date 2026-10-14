@@ -14,19 +14,18 @@ from .visibility import VisibilityDetector, ExistenceTrack
 
 VARIANTS = {
     'constant_acceleration': (AdaptiveDetectionTracker, BoxTrack, 'constant_acceleration'),
-    'raw_both': (DetectorOutputTracker, BoxTrack, 'raw_both'),
-    'cv8': (DetectorOutputTracker, ConstantVelocity, 'raw_both'),
-    'damped_ca10': (DetectorOutputTracker, DampedAcceleration, 'raw_both'),
-    'log_cv8': (DetectorOutputTracker, LogSizeCV, 'raw_both'),
-    'aspect_cv8': (DetectorOutputTracker, AspectHeightCV, 'raw_both'),
+    'cv8': (DetectorOutputTracker, ConstantVelocity, 'detector_observations'),
+    'damped_ca10': (DetectorOutputTracker, DampedAcceleration, 'detector_observations'),
+    'log_cv8': (DetectorOutputTracker, LogSizeCV, 'detector_observations'),
+    'aspect_cv8': (DetectorOutputTracker, AspectHeightCV, 'detector_observations'),
     'projective_restart_cv8': (
         DetectorOutputTracker,
         ProjectiveRestartCV,
-        'raw_both',
+        'detector_observations',
     ),
-    'camera_ca10': (CameraDetector, BoxTrack, 'raw_both'),
-    'appearance_ca10': (AppearanceDetector, BoxTrack, 'raw_both'),
-    'visibility_ca10': (VisibilityDetector, ExistenceTrack, 'raw_both'),
+    'camera_ca10': (CameraDetector, BoxTrack, 'detector_observations'),
+    'appearance_ca10': (AppearanceDetector, BoxTrack, 'detector_observations'),
+    'visibility_ca10': (VisibilityDetector, ExistenceTrack, 'detector_observations'),
 }
 
 

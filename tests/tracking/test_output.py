@@ -59,7 +59,7 @@ def test_exact_association_and_no_state_mutation(monkeypatch):
     )
     born = emit(tracker_instance)
 
-    assert emit(tracker_instance, 'raw_both') == born
+    assert emit(tracker_instance, 'detector_observations') == born
     tracker_instance.tracks[0].P *= 10
     tracker_instance.step(
         image, StubDetector([[104.125, 100.375, 184.875, 180.625, 0.85, 2]]), 'cpu'
@@ -67,7 +67,7 @@ def test_exact_association_and_no_state_mutation(monkeypatch):
 
     assert len(tracker_instance.matched_outputs) == 1
     before = digest(state(tracker_instance))
-    out = emit(tracker_instance, 'raw_both')
+    out = emit(tracker_instance, 'detector_observations')
 
     assert out[0]['box_xyxy'] == [104.125, 100.375, 184.875, 180.625]
     assert out[0]['conf'] == pytest.approx(0.85)
@@ -92,7 +92,7 @@ def test_rescue_birth_and_filtered_detection_unchanged(monkeypatch):
         and not tracker_instance.matched_outputs
     )
     assert tracker_instance.tracks[0].consecutive_rescues == 1
-    assert emit(tracker_instance, 'raw_both') == emit(tracker_instance)
+    assert emit(tracker_instance, 'detector_observations') == emit(tracker_instance)
 
 
 def test_prediction_only_clears_previous_match(monkeypatch):
@@ -113,7 +113,7 @@ def test_prediction_only_clears_previous_match(monkeypatch):
 
     assert not result['ran_inference'] and model.calls == 0
     assert not tracker_instance.matched_outputs and emit(
-        tracker_instance, 'raw_both'
+        tracker_instance, 'detector_observations'
     ) == emit(tracker_instance)
 
 
@@ -131,7 +131,7 @@ def test_association_is_not_forced_to_match_class(monkeypatch):
     )
     assert (
         track_id in tracker_instance.matched_outputs
-        and emit(tracker_instance, 'raw_both')[0]['class_id'] == 0
+        and emit(tracker_instance, 'detector_observations')[0]['class_id'] == 0
     )
 
 
@@ -146,26 +146,19 @@ def test_adapter_never_reads_labels_or_caches(monkeypatch):
         monkeypatch.setattr(common, name, forbidden)
 
     tracker_instance.step(image, StubDetector([[10, 10, 50, 50, 0.9, 2]]), 'cpu')
-    emit(tracker_instance, 'raw_both')
+    emit(tracker_instance, 'detector_observations')
 
 
-def test_geometry_and_score_are_separate(monkeypatch):
+def test_detector_observations_preserve_matched_geometry_and_score(monkeypatch):
     tracker_instance = make_tracker(monkeypatch)
     image = np.zeros((720, 1280, 3), np.uint8)
     tracker_instance.step(image, StubDetector([[10, 10, 50, 50, 0.9, 2]]), 'cpu')
     tracker_instance.tracks[0].P *= 10
     tracker_instance.step(image, StubDetector([[12.5, 10, 52.5, 50, 0.8, 2]]), 'cpu')
-    baseline_output = emit(tracker_instance)[0]
-    box_output = emit(tracker_instance, 'raw_boxes')[0]
-    score_output = emit(tracker_instance, 'raw_scores')[0]
+    output = emit(tracker_instance, 'detector_observations')[0]
 
-    assert (
-        box_output['conf'] == baseline_output['conf']
-        and score_output['box_xyxy'] == baseline_output['box_xyxy']
-    )
-    assert box_output['box_xyxy'] == [12.5, 10, 52.5, 50] and score_output[
-        'conf'
-    ] == pytest.approx(0.8)
+    assert output['box_xyxy'] == [12.5, 10, 52.5, 50]
+    assert output['conf'] == pytest.approx(0.8)
 
 
 def test_baseline_control_preserves_floating_point_boxes():
