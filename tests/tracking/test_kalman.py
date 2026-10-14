@@ -2,10 +2,10 @@
 
 import numpy as np
 
-from adaptive_video.tracking import scheduler
-from adaptive_video.tracking.kalman import BoxTrack, correct_distribution
-from adaptive_video.tracking.output import make
-from adaptive_video.variants.motion import ConstantVelocity
+from src.tracking import scheduler
+from src.tracking.kalman import BoxTrack, correct_distribution
+from src.tracking.output import make
+from src.variants.motion import ConstantVelocity
 
 
 def test_scalar_measurement_weight_and_uncertainty():

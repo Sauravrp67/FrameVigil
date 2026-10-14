@@ -6,8 +6,8 @@ from _checkout import add_source_directory
 
 add_source_directory()
 
-from adaptive_video.experiments.figures import run
-from adaptive_video.experiments import prediction_plots
+from src.experiments.figures import run
+from src.experiments import prediction_plots
 
 
 def main():

@@ -3,7 +3,7 @@
 import numpy as np
 
 from .helpers import make_track
-from adaptive_video.variants.projective_restart import ProjectiveRestartCV
+from src.variants.projective_restart import ProjectiveRestartCV
 
 
 def test_invalid_correction_restarts_from_real_measurement_without_overconfidence():

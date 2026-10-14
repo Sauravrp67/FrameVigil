@@ -10,9 +10,9 @@ The constant acceleration Kalman tracking and empty-scene classifier adapt
 [ALBIREO](https://github.com/amirtaherin/albireo), copyright (c) 2024 Amir Taherin,
 under the MIT license. Attribution remains in:
 
-- `src/adaptive_video/tracking/scheduler.py`
-- `src/adaptive_video/tracking/kalman.py`
-- `src/adaptive_video/detectors/empty_scene.py`
+- `src/tracking/scheduler.py`
+- `src/tracking/kalman.py`
+- `src/detectors/empty_scene.py`
 
 FrameVigil modifies and extends these components for variant comparisons and
 measurement. The upstream permission and copyright notice is preserved in

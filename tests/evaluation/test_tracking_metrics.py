@@ -7,10 +7,10 @@ import json
 import numpy as np
 import pytest
 
-from adaptive_video.dataset import save
-from adaptive_video.evaluation.mot import mot
-from adaptive_video.experiments import evaluate
-from adaptive_video.tracking.output import emit
+from src.dataset import save
+from src.evaluation.mot import mot
+from src.experiments import evaluate
+from src.tracking.output import emit
 
 
 def box(identity=1, class_id=2, xyxy=(0, 0, 10, 10)):

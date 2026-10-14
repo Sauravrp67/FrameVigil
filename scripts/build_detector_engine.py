@@ -12,8 +12,8 @@ add_source_directory()
 
 import yaml
 
-from adaptive_video.project import ROOT
-from adaptive_video.detectors.build_engine import build_engine
+from src.project import ROOT
+from src.detectors.build_engine import build_engine
 
 
 def main():

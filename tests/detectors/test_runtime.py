@@ -8,9 +8,9 @@ import pytest
 import torch
 import torchvision.ops
 
-from adaptive_video.detectors import factory, nms, yolo
-from adaptive_video.detectors.configuration import apply_precision, inference_settings
-from adaptive_video.detectors import tensorrt_runtime as runtime
+from src.detectors import factory, nms, yolo
+from src.detectors.configuration import apply_precision, inference_settings
+from src.detectors import tensorrt_runtime as runtime
 
 
 @pytest.fixture(autouse=True)
@@ -180,7 +180,7 @@ def test_engine_head_mismatch_rejected_before_execution(tmp_path, monkeypatch):
 
 @pytest.mark.parametrize('with_auxiliary', [False, True])
 def test_export_uses_decoded_tensor_with_any_auxiliary_structure(with_auxiliary):
-    from adaptive_video.detectors.yolo import ExportModel
+    from src.detectors.yolo import ExportModel
 
     class Detector(torch.nn.Module):
         def forward(self, inputs):
@@ -220,7 +220,7 @@ def test_rtdetrv2_rejects_yolo_nms_setting():
 def test_rtdetrv2_original_coordinates_and_class_mapping():
     import numpy as np
     from transformers import RTDetrImageProcessor
-    from adaptive_video.detectors.rtdetrv2 import RTDETRv2Detector
+    from src.detectors.rtdetrv2 import RTDETRv2Detector
 
     detector = RTDETRv2Detector.__new__(RTDETRv2Detector)
     detector.processor = RTDetrImageProcessor(size={'height': 640, 'width': 640})

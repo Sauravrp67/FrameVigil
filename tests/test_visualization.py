@@ -7,9 +7,9 @@ import cv2
 import numpy as np
 import pytest
 
-from adaptive_video.dataset import save, sha
-from adaptive_video.evaluation.dataset import EvaluationDataset
-from adaptive_video.experiments import figures, render
+from src.dataset import save, sha
+from src.evaluation.dataset import EvaluationDataset
+from src.experiments import figures, render
 
 
 def write_table(path, energy=False):

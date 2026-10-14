@@ -3,12 +3,12 @@
 import numpy as np
 import pytest
 
-from adaptive_video.measurement.support import configure, extended_state
-from adaptive_video.tracking import scheduler
-from adaptive_video.tracking.kalman import BoxTrack
-from adaptive_video.tracking.output import DetectorOutputTracker, digest
-from adaptive_video.tracking.scheduler import AdaptiveDetectionTracker
-from adaptive_video.variants.registry import VARIANTS, compare_outputs, payload
+from src.measurement.support import configure, extended_state
+from src.tracking import scheduler
+from src.tracking.kalman import BoxTrack
+from src.tracking.output import DetectorOutputTracker, digest
+from src.tracking.scheduler import AdaptiveDetectionTracker
+from src.variants.registry import VARIANTS, compare_outputs, payload
 
 
 @pytest.fixture(autouse=True)

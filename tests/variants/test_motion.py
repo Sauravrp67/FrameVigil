@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from adaptive_video.variants.motion import ConstantVelocity, DampedAcceleration
+from src.variants.motion import ConstantVelocity, DampedAcceleration
 
 
 def test_cv_constant_motion_and_measurement_velocity_update():

@@ -2,7 +2,7 @@
 
 import pytest
 
-from adaptive_video.measurement.power import integrate
+from src.measurement.power import integrate
 
 
 def test_known_energy_and_sampling_gaps():

@@ -4,7 +4,7 @@ from _checkout import add_source_directory
 
 add_source_directory()
 
-from adaptive_video.measurement.stages import validate_power
+from src.measurement.stages import validate_power
 
 
 def main():

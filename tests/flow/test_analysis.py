@@ -7,12 +7,12 @@ import pandas as pd
 import pytest
 import torch
 
-from adaptive_video.dataset import csvwrite, read, save
+from src.dataset import csvwrite, read, save
 from ultralytics.engine.results import Results
-from adaptive_video.flow import reliability, reproduce, shadow
-from adaptive_video.tracking import scheduler
-from adaptive_video.tracking.kalman import BoxTrack
-from adaptive_video.tracking.output import (
+from src.flow import reliability, reproduce, shadow
+from src.tracking import scheduler
+from src.tracking.kalman import BoxTrack
+from src.tracking.output import (
     DetectorOutputTracker,
     digest,
     emit,

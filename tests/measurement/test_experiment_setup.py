@@ -2,11 +2,11 @@
 
 import pytest
 
-from adaptive_video import project
-from adaptive_video.dataset import save
-from adaptive_video.measurement import stages
-from adaptive_video.measurement.runner import trial
-from adaptive_video.measurement.support import exact_repeat
+from src import project
+from src.dataset import save
+from src.measurement import stages
+from src.measurement.runner import trial
+from src.measurement.support import exact_repeat
 
 
 def prepare_inputs(root):

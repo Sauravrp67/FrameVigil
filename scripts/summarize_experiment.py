@@ -6,8 +6,8 @@ from _checkout import add_source_directory
 
 add_source_directory()
 
-from adaptive_video.experiments.evaluate import run
-from adaptive_video.project import bootstrap
+from src.experiments.evaluate import run
+from src.project import bootstrap
 
 
 def main():

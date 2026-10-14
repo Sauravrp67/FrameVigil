@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import numpy as np
 
-from adaptive_video.variants.appearance import AppearanceDetector, descriptor, distance
+from src.variants.appearance import AppearanceDetector, descriptor, distance
 
 
 def test_histogram_identity_distinction_and_invalid_crop():

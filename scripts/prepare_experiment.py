@@ -5,8 +5,8 @@ from _checkout import add_source_directory
 
 add_source_directory()
 
-from adaptive_video.measurement.stages import prepare
-from adaptive_video.project import ROOT
+from src.measurement.stages import prepare
+from src.project import ROOT
 
 
 def main():

@@ -5,8 +5,8 @@ from _checkout import add_source_directory
 
 add_source_directory()
 
-from adaptive_video.evaluation.dataset import prepare_dataset_manifest
-from adaptive_video.project import ROOT
+from src.evaluation.dataset import prepare_dataset_manifest
+from src.project import ROOT
 
 
 def main():

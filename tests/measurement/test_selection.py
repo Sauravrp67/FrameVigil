@@ -5,10 +5,10 @@ from collections import Counter
 import pytest
 import yaml
 
-from adaptive_video.evaluation.dataset import EvaluationDataset
-from adaptive_video.experiments.evaluate import collect_predictions, validate_schedule
-from adaptive_video.measurement import stages
-from adaptive_video.project import read, save
+from src.evaluation.dataset import EvaluationDataset
+from src.experiments.evaluate import collect_predictions, validate_schedule
+from src.measurement import stages
+from src.project import read, save
 
 
 @pytest.fixture

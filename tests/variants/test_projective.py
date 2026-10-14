@@ -7,7 +7,7 @@ from .helpers import (
     assert_jacobian_and_process_noise,
     make_track,
 )
-from adaptive_video.variants.projective import ProjectiveCV
+from src.variants.projective import ProjectiveCV
 
 
 def test_projective_jacobian_and_covariance_units():

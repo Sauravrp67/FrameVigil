@@ -8,7 +8,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from adaptive_video.measurement import clocks, stages
+from src.measurement import clocks, stages
 
 
 LOCKED = (

@@ -5,7 +5,7 @@ from _checkout import add_source_directory
 
 add_source_directory()
 
-from adaptive_video.measurement.stages import measure
+from src.measurement.stages import measure
 
 
 def main():

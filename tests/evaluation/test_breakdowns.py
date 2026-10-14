@@ -4,11 +4,11 @@ import numpy as np
 import pytest
 from pycocotools.coco import COCO
 
-from adaptive_video.evaluation.coco import coco
-from adaptive_video.evaluation.coco import frame_errors, localization_curve
-from adaptive_video.experiments.statistics import frame_state, timing_summary, power_rows
-from adaptive_video.experiments.prediction_plots import select_cases
-from adaptive_video.project import save
+from src.evaluation.coco import coco
+from src.evaluation.coco import frame_errors, localization_curve
+from src.experiments.statistics import frame_state, timing_summary, power_rows
+from src.experiments.prediction_plots import select_cases
+from src.project import save
 
 
 def test_localization_and_frame_errors_use_original_coco_matching():
@@ -86,7 +86,7 @@ def test_cases_include_harm_and_benefit_without_manual_selection():
 
 
 def test_skip_plot_allows_no_energy(tmp_path):
-    from adaptive_video.experiments.figures import skipping_plot
+    from src.experiments.figures import skipping_plot
 
     rows = [
         {'variant': variant, 'video': 'clip', 'AP50_95_percent': '30',
@@ -106,7 +106,7 @@ def test_skip_plot_allows_no_energy(tmp_path):
 def test_csv_comparisons_use_p95_and_preserve_missing_metrics(tmp_path):
     import csv
 
-    from adaptive_video.experiments.statistics import write_report_tables
+    from src.experiments.statistics import write_report_tables
 
     summary = [
         dict(variant='baseline', AP50_95_percent=30, latency_ms_per_frame=100,
@@ -138,7 +138,7 @@ def test_csv_comparisons_use_p95_and_preserve_missing_metrics(tmp_path):
 
 
 def test_aggregate_power_grids_weight_clips_equally(tmp_path):
-    from adaptive_video.experiments.figures import power_profiles, power_plots
+    from src.experiments.figures import power_profiles, power_plots
 
     traces = []
 
@@ -171,8 +171,8 @@ def test_aggregate_power_grids_weight_clips_equally(tmp_path):
 
 
 def test_edp_plot_and_missing_energy(tmp_path):
-    from adaptive_video.experiments.figures import edp_plot, color_map
-    from adaptive_video.experiments.statistics import energy_delay_product
+    from src.experiments.figures import edp_plot, color_map
+    from src.experiments.statistics import energy_delay_product
 
     assert energy_delay_product(None, 100) is None
     rows = [dict(variant='baseline', module_edp_j_ms=200, AP50_95_percent=30),
@@ -184,7 +184,7 @@ def test_edp_plot_and_missing_energy(tmp_path):
 
 
 def test_ap50_edp_plot_uses_ap50(tmp_path):
-    from adaptive_video.experiments.figures import edp_plot, color_map
+    from src.experiments.figures import edp_plot, color_map
 
     rows = [dict(variant='baseline', module_edp_j_ms=200, AP50_percent=40)]
     paths = edp_plot(rows, tmp_path, color_map(['baseline']), metric='AP50_percent')
@@ -196,7 +196,7 @@ def test_ap50_edp_plot_uses_ap50(tmp_path):
 @pytest.mark.parametrize('metric,filename', [
     ('HOTA_percent', 'hota_edp'), ('IDF1_percent', 'idf1_edp'), ('MOTA_percent', 'mota_edp')])
 def test_tracking_edp_omits_baseline_and_missing_scores(tmp_path, metric, filename):
-    from adaptive_video.experiments.figures import edp_plot, color_map
+    from src.experiments.figures import edp_plot, color_map
 
     rows = [dict(variant='baseline', module_edp_j_ms=200),
             dict(variant='cv8', module_edp_j_ms=100, **{metric: -5}),

@@ -2,7 +2,7 @@
 
 import sys
 
-from adaptive_video import dataset, project
+from src import dataset, project
 
 
 def test_json_and_compressed_json_roundtrip(tmp_path):

@@ -2,7 +2,7 @@
 
 import json
 
-import adaptive_video.measurement.isolated as isolated_power
+import src.measurement.isolated as isolated_power
 
 
 def test_isolated_transport_preserves_trace_and_phase(tmp_path, monkeypatch):

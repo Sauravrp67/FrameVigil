@@ -59,7 +59,7 @@ class EnvironmentTests(unittest.TestCase):
 
     def test_project_and_library_imports(self):
         modules = (
-            'adaptive_video',
+            'src',
             'scipy.linalg',
             'pandas',
             'onnx',

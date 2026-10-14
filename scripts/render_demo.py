@@ -6,7 +6,7 @@ from _checkout import add_source_directory
 
 add_source_directory()
 
-from adaptive_video.experiments.render import run
+from src.experiments.render import run
 
 
 def main():

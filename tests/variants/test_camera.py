@@ -4,8 +4,8 @@ import cv2
 import numpy as np
 
 from .helpers import make_track
-from adaptive_video.variants.camera import estimate, transform_track
-from adaptive_video.variants.motion import DampedAcceleration
+from src.variants.camera import estimate, transform_track
+from src.variants.motion import DampedAcceleration
 
 
 def test_sparse_flow_recovers_known_camera_translation():

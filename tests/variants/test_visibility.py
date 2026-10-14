@@ -3,8 +3,8 @@
 import numpy as np
 
 from .helpers import make_track
-from adaptive_video.tracking.kalman import BoxTrack
-from adaptive_video.variants.visibility import (
+from src.tracking.kalman import BoxTrack
+from src.variants.visibility import (
     ExistenceTrack,
     VisibilityDetector,
     covered_fraction,

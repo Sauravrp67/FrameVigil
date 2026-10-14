@@ -4,8 +4,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from adaptive_video.evaluation.coco import BDD_TO_COCO, DEFAULT_EVAL_CLASSES, IDS
-from adaptive_video.experiments import evaluate
+from src.evaluation.coco import BDD_TO_COCO, DEFAULT_EVAL_CLASSES, IDS
+from src.experiments import evaluate
 
 
 def test_accuracy_counts_only_first_repeat_but_validates_all(monkeypatch):

@@ -49,7 +49,7 @@ class IsolatedPower:
         environment = dict(os.environ)
         environment['PYTHONPATH'] = os.pathsep.join(sys.path)
         self.proc = subprocess.Popen(
-            [sys.executable, '-m', 'adaptive_video.measurement.power_worker'],
+            [sys.executable, '-m', 'src.measurement.power_worker'],
             env=environment,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,

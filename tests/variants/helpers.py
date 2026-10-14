@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from adaptive_video.variants.motion import ConstantVelocity
+from src.variants.motion import ConstantVelocity
 
 
 def make_track(track_type):

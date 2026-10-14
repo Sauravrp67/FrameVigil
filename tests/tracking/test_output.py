@@ -6,19 +6,19 @@ import numpy as np
 import pytest
 import torch
 
-from adaptive_video import dataset as common
+from src import dataset as common
 from ultralytics.engine.results import Results
-from adaptive_video.detectors.nms import _pure_torch_nms
-from adaptive_video.measurement.protocol import always_rows
-from adaptive_video.tracking.kalman import BoxTrack
-from adaptive_video.tracking.output import (
+from src.detectors.nms import _pure_torch_nms
+from src.measurement.protocol import always_rows
+from src.tracking.kalman import BoxTrack
+from src.tracking.output import (
     DetectorOutputTracker,
     digest,
     emit,
     make,
     state,
 )
-import adaptive_video.tracking.scheduler as module
+import src.tracking.scheduler as module
 
 
 class StubDetector:

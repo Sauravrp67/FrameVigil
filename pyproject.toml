@@ -16,6 +16,8 @@ vision = ["transformers==5.5.4", "ultralytics==8.4.215", "torch>=2.4", "torchvis
 license-files = ["LICENSE", "NOTICE.md", "licenses/*"]
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
+include = ["src", "src.*"]
+namespaces = false
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -8,8 +8,8 @@ from .helpers import (
     assert_jacobian_and_process_noise,
     make_track,
 )
-from adaptive_video.variants.motion import ConstantVelocity
-from adaptive_video.variants.representation import (
+from src.variants.motion import ConstantVelocity
+from src.variants.representation import (
     AspectHeightCV,
     LogSizeCV,
     RepresentedCV,

@@ -4,8 +4,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from adaptive_video.dataset import save
-from adaptive_video.measurement import power, stages
+from src.dataset import save
+from src.measurement import power, stages
 
 
 def test_direct_power_validation_requires_module_sensor_before_loading_workload(

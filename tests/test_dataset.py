@@ -7,12 +7,12 @@ import subprocess
 
 import pytest
 
-from adaptive_video import project
-from adaptive_video.evaluation.dataset import (
+from src import project
+from src.evaluation.dataset import (
     EvaluationDataset,
     prepare_dataset_manifest,
 )
-from adaptive_video.experiments import evaluate
+from src.experiments import evaluate
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / 'scripts/prepare_dataset.sh'

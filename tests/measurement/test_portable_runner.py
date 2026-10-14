@@ -6,8 +6,8 @@ from unittest.mock import Mock
 import numpy as np
 import torch
 
-from adaptive_video.measurement import runner
-from adaptive_video.project import read
+from src.measurement import runner
+from src.project import read
 
 
 def test_trial_without_power_never_starts_sampler(monkeypatch, tmp_path):

@@ -19,15 +19,14 @@ The study is done with YOLO11x, YOLO26x and RT-DETRv2 R50-vd, with TensorRT infe
 
 On this selected 202-frame clip, one of the motion models, visibility, invokes the detector **113 times** (**44.1% skipped**) with **66.38% AP50**, versus **202 calls** and **67.70% AP50** for baseline. Visibility uses **18.40 W** mean module-input power, **2.111 J/frame**, and **114.77 ms/frame** mean pipeline latency; baseline uses **20.41 W**, **3.525 J/frame**, and **172.66 ms/frame**.
 
-The full 40.4-second sequence plays at the dataset's 5 Hz sampling rate. Headers indicate whether the detector ran. [MP4 video](assets/demo.mp4) · [Full-resolution still](assets/demo_preview.png).
-
+The full 40.4-second sequence plays at the dataset's 5 Hz sampling rate. Headers indicate whether the detector ran.
 ## Overview
 
 The controller predicts tracks and invokes detection based on scene occupancy, uncertainty and elapsed-frame limits. Between detector calls, it outputs predicted boxes; eligible unmatched tracks are retained temporarily.
 
 [![FrameVigil core architecture: track prediction, selective detector invocation and temporal updates](assets/system.svg)](assets/system.svg)
 
-[Full-size diagram](assets/system.svg) · [PNG version](assets/system.png). The controller chooses between detector updates and prediction-only or empty-scene output. Motion models, association and rescue, and output strategies are the components compared in the study.
+The controller chooses between detector updates and prediction-only or empty-scene output. Motion models, association and rescue, and output strategies are the components compared in the study.
 
 ## Variant Reference
 
@@ -241,8 +240,6 @@ This writes `comparison.mp4` and `preview.png`. Both the embedded animation and 
 | `summary/power_comparison.csv` | Mean power, J/frame, EDP and reductions relative to baseline. |
 | `summary/per_video.csv`, `summary/frames.csv` | Per-video metrics and frame-level diagnostics. |
 | `figures/` | Diagnostic PNG/SVG figures, including aggregate power comparisons. |
-
-Runtime code is under [src/adaptive_video](src/adaptive_video): `detectors/` handles inference, `tracking/` handles scheduling and track lifecycle, `variants/` defines comparisons, `measurement/` records trials, `evaluation/` computes metrics, and `experiments/` generates tables and figures. Run checks with `python -m pytest -q tests`.
 
 ## Scope and acknowledgements
 

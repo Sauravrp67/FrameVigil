@@ -6,8 +6,8 @@ import sys
 
 import pytest
 
-from adaptive_video.measurement.stages import prepare
-from adaptive_video.project import ROOT
+from src.measurement.stages import prepare
+from src.project import ROOT
 
 
 STAGES = [
